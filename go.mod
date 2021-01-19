@@ -6,6 +6,7 @@ require (
 	github.com/gogo/status v1.1.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
+	github.com/joeig/go-powerdns/v2 v2.4.0
 	github.com/metal-stack/metal-lib v0.6.9
 	github.com/metal-stack/security v0.4.0
 	github.com/metal-stack/v v1.0.2

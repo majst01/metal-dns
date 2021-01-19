@@ -35,7 +35,7 @@ message DomainGetRequest {
 }
 message DomainCreateRequest {
     string name = 1;
-    string ipaddress = 2;
+    repeated string nameservers = 2;
 }
 message DomainDeleteRequest {
     string name = 1;
@@ -62,9 +62,10 @@ message Record {
 	string tag = 10;
 }
 message RecordsListRequest {
-    google.protobuf.StringValue uuid = 1;
-    google.protobuf.StringValue type = 2;
-    google.protobuf.StringValue name = 3;
+	string domain = 1;
+    google.protobuf.StringValue uuid = 2;
+    google.protobuf.StringValue type = 3;
+    google.protobuf.StringValue name = 4;
 }
 message RecordGetRequest {
     string uuid = 1;
@@ -98,7 +99,7 @@ message RecordDeleteRequest {
 
 
 message RecordsResponse {
-    repeated Record record = 1;
+    repeated Record records = 1;
 }
 message RecordResponse {
     Record record = 1;

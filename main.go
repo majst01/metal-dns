@@ -165,8 +165,8 @@ func run() {
 	// grpcServer := grpc.NewServer(opts...)
 	grpcServer := grpc.NewServer(opts...)
 
-	domainService := service.NewDomainService(logger)
-	recordService := service.NewRecordService(logger)
+	domainService := service.NewDomainService(logger, "http://localhost:8081", "localhost", "apipw", nil)
+	recordService := service.NewRecordService(logger, "http://localhost:8081", "localhost", "apipw", nil)
 
 	apiv1.RegisterDomainServiceServer(grpcServer, domainService)
 	apiv1.RegisterRecordServiceServer(grpcServer, recordService)

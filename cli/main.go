@@ -43,15 +43,25 @@ func run(c client.Client, log *zap.Logger) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), grpcRequestTimeout)
 	defer cancel()
-
-	// create
-	dcr := &v1.DomainCreateRequest{
-		Name:      "test.example.com",
-		Ipaddress: "127.0.0.1",
-	}
-	res, err := c.Domain().Create(ctx, dcr)
+	ds, err := c.Domain().List(ctx, &v1.DomainsListRequest{})
 	if err != nil {
 		log.Fatal("could not create prefix", zap.Error(err))
 	}
-	log.Sugar().Infow("created prefix", "prefix", res.Domain)
+	log.Sugar().Infow("list domains", "domains", ds.Domains)
+
+	rs, err := c.Record().List(ctx, &v1.RecordsListRequest{Domain: "example.com"})
+	if err != nil {
+		log.Fatal("could not list records", zap.Error(err))
+	}
+	log.Sugar().Infow("list records", "records", rs.Records)
+	// create
+	dcr := &v1.DomainCreateRequest{
+		Name:        "a.example.com",
+		Nameservers: []string{"localhost."},
+	}
+	d, err := c.Domain().Create(ctx, dcr)
+	if err != nil {
+		log.Fatal("could not create domain", zap.Error(err))
+	}
+	log.Sugar().Infow("created domain", "domain", d.Domain)
 }

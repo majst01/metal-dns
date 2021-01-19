@@ -33,13 +33,20 @@ client:
 	go build -tags netgo -o bin/client cli/main.go
 	strip bin/client
 
-.PHONY: postgres-up
-postgres-up: postgres-rm
-	docker run -d --name dnsdb -p 5433:5432 -e POSTGRES_PASSWORD="password" -e POSTGRES_USER="dns" -e POSTGRES_DB="dns" postgres:13-alpine
 
-.PHONY: postgres-rm
-postgres-rm:
-	docker rm -f dnsdb || true
+
+.PHONY: pdns-up
+pdns-up: pdns-rm
+	docker run -d --name powerdns -it --rm -p 8081:8081 -p 5533:53 powerdns/pdns-auth-44 --loglevel=5 --webserver=yes --webserver-address=0.0.0.0 --webserver-allow-from=0.0.0.0/0 --webserver-loglevel=detailed --api=yes --api-key=apipw
+	docker exec -it powerdns pdnsutil create-zone example.com
+	docker exec -it powerdns pdnsutil create-zone customera.example.com
+	docker exec -it powerdns pdnsutil create-zone customerb.example.com
+	docker exec -it powerdns pdnsutil add-record example.com www.example.com A 1.2.3.4
+	docker exec -it powerdns pdnsutil list-zone example.com
+
+.PHONY: pdns-rm
+pdns-rm:
+	docker rm -f powerdns || true
 
 .PHONY: certs
 certs:
