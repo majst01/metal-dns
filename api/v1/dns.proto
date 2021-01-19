@@ -1,0 +1,105 @@
+syntax = "proto3";
+
+package v1;
+
+option go_package = "./v1";
+
+import "google/protobuf/wrappers.proto";
+
+service DomainService {
+	rpc List(DomainsListRequest) returns (DomainsResponse);
+	rpc Get(DomainGetRequest) returns (DomainResponse);
+	rpc Create(DomainCreateRequest) returns (DomainResponse);
+	rpc Delete(DomainDeleteRequest) returns (DomainResponse);
+}
+service RecordService {
+    rpc List(RecordsListRequest) returns (RecordsResponse);
+	rpc Get(RecordGetRequest) returns (RecordResponse);
+	rpc Delete(RecordDeleteRequest) returns (RecordResponse);
+	rpc Update(RecordUpdateRequest) returns (RecordResponse);
+	rpc Create(RecordCreateRequest) returns (RecordResponse);
+}
+
+// Domains
+
+message Domain {
+	string name = 1;
+	int32 ttl = 2;
+	string zone_file = 3;
+}
+
+message DomainsListRequest {
+}
+message DomainGetRequest {
+    string name = 1;
+}
+message DomainCreateRequest {
+    string name = 1;
+    string ipaddress = 2;
+}
+message DomainDeleteRequest {
+    string name = 1;
+}
+message DomainsResponse {
+    repeated Domain domains = 1;
+}
+message DomainResponse {
+    Domain domain = 1;
+}
+
+// Records
+
+message Record {
+	string uuid = 1;
+	string type = 2;
+	string name = 3;
+	string data = 4;
+	int32 priority = 5;
+	int32 port = 6;
+	int32 ttl = 7;
+	int32 weight = 8;
+	int32 flags = 9;
+	string tag = 10;
+}
+message RecordsListRequest {
+    google.protobuf.StringValue uuid = 1;
+    google.protobuf.StringValue type = 2;
+    google.protobuf.StringValue name = 3;
+}
+message RecordGetRequest {
+    string uuid = 1;
+}
+message RecordCreateRequest {
+    string type = 2;
+	string name = 3;
+	string data = 4;
+	int32 priority = 5;
+	int32 port = 6;
+	int32 ttl = 7;
+	int32 weight = 8;
+	int32 flags = 9;
+    string tag = 10;
+}
+message RecordUpdateRequest {
+    string uuid = 1;
+    string type = 2;
+	string name = 3;
+	string data = 4;
+	int32 priority = 5;
+	int32 port = 6;
+	int32 ttl = 7;
+	int32 weight = 8;
+	int32 flags = 9;
+	string tag = 10;
+}
+message RecordDeleteRequest {
+    string uuid = 1;
+}
+
+
+message RecordsResponse {
+    repeated Record record = 1;
+}
+message RecordResponse {
+    Record record = 1;
+}
