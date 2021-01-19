@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/gogo/status v1.1.0
+	github.com/golang/protobuf v1.4.3
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/joeig/go-powerdns/v2 v2.4.0

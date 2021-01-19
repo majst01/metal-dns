@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/gogo/status"
 	"github.com/joeig/go-powerdns/v2"
@@ -31,12 +32,15 @@ func (r *RecordService) List(ctx context.Context, req *v1.RecordsListRequest) (*
 	}
 	records := []*v1.Record{}
 	for _, rset := range zone.RRsets {
-		record := &v1.Record{
-			Name: *rset.Name,
-			Ttl:  int32(*rset.TTL),
-			Type: string(*rset.Type),
+		for _, r := range rset.Records {
+			record := &v1.Record{
+				Name: *rset.Name,
+				Data: *r.Content,
+				Ttl:  int32(*rset.TTL),
+				Type: string(*rset.Type),
+			}
+			records = append(records, record)
 		}
-		records = append(records, record)
 	}
 	return &v1.RecordsResponse{Records: records}, nil
 }
@@ -44,7 +48,21 @@ func (r *RecordService) Get(ctx context.Context, req *v1.RecordGetRequest) (*v1.
 	return nil, nil
 }
 func (r *RecordService) Create(ctx context.Context, req *v1.RecordCreateRequest) (*v1.RecordResponse, error) {
-	return nil, nil
+	domainparts := strings.SplitAfterN(req.Name, ".", 2)
+	domain := domainparts[1]
+	rrtype := powerdns.RRType(req.Type)
+	r.log.Sugar().Infof("create record domain:%s name:%s type:%s", domain, req.Name, rrtype)
+	err := r.pdns.Records.Add(domain, req.Name, rrtype, uint32(req.Ttl), []string{req.Data})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	record := &v1.Record{
+		Name: req.Name,
+		Data: req.Data,
+		Type: req.Type,
+		Ttl:  req.Ttl,
+	}
+	return &v1.RecordResponse{Record: record}, nil
 }
 func (r *RecordService) Update(ctx context.Context, req *v1.RecordUpdateRequest) (*v1.RecordResponse, error) {
 	return nil, nil

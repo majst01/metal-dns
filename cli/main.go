@@ -45,13 +45,13 @@ func run(c client.Client, log *zap.Logger) {
 	defer cancel()
 	ds, err := c.Domain().List(ctx, &v1.DomainsListRequest{})
 	if err != nil {
-		log.Fatal("could not create prefix", zap.Error(err))
+		log.Error("could not create prefix", zap.Error(err))
 	}
 	log.Sugar().Infow("list domains", "domains", ds.Domains)
 
 	rs, err := c.Record().List(ctx, &v1.RecordsListRequest{Domain: "example.com"})
 	if err != nil {
-		log.Fatal("could not list records", zap.Error(err))
+		log.Error("could not list records", zap.Error(err))
 	}
 	log.Sugar().Infow("list records", "records", rs.Records)
 	// create
@@ -61,7 +61,22 @@ func run(c client.Client, log *zap.Logger) {
 	}
 	d, err := c.Domain().Create(ctx, dcr)
 	if err != nil {
-		log.Fatal("could not create domain", zap.Error(err))
+		log.Error("could not create domain", zap.Error(err))
+	} else {
+		log.Sugar().Infow("created domain", "domain", d.Domain)
 	}
-	log.Sugar().Infow("created domain", "domain", d.Domain)
+
+	// create record
+	rcr := &v1.RecordCreateRequest{
+		Name: "www.a.example.com",
+		Type: "A",
+		Ttl:  3600,
+		Data: "1.2.3.4",
+	}
+	r, err := c.Record().Create(ctx, rcr)
+	if err != nil {
+		log.Error("could not create record", zap.Error(err))
+	}
+	log.Sugar().Infow("created record", "record", r.Record)
+
 }

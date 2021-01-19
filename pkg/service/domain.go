@@ -17,7 +17,6 @@ type DomainService struct {
 }
 
 func NewDomainService(l *zap.Logger, baseURL string, vHost string, apikey string, httpClient *http.Client) *DomainService {
-	// pdns := powerdns.NewClient("http://localhost:80", "localhost", map[string]string{"X-API-Key": "apipw"}, nil)
 	pdns := powerdns.NewClient(baseURL, vHost, map[string]string{"X-API-Key": apikey}, httpClient)
 	return &DomainService{
 		pdns: pdns,
@@ -51,8 +50,19 @@ func (d *DomainService) Get(ctx context.Context, req *v1.DomainGetRequest) (*v1.
 }
 
 func (d *DomainService) Create(ctx context.Context, req *v1.DomainCreateRequest) (*v1.DomainResponse, error) {
-	// FIXME if subdomain call Zones.AddSlave
-	zone, err := d.pdns.Zones.AddNative(req.Name, false, "", false, "", "", false, req.Nameservers)
+	// TODO add parameters to DomainCreateRequest
+	zone := &powerdns.Zone{
+		Name:        &req.Name,
+		Kind:        powerdns.ZoneKindPtr(powerdns.MasterZoneKind),
+		DNSsec:      powerdns.Bool(false),
+		Nsec3Param:  nil,
+		Nsec3Narrow: powerdns.Bool(false),
+		SOAEdit:     nil,
+		SOAEditAPI:  nil,
+		APIRectify:  powerdns.Bool(false),
+		Nameservers: req.Nameservers,
+	}
+	zone, err := d.pdns.Zones.Add(zone)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

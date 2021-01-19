@@ -41,7 +41,7 @@ pdns-up: pdns-rm
 	docker exec -it powerdns pdnsutil create-zone example.com
 	docker exec -it powerdns pdnsutil create-zone customera.example.com
 	docker exec -it powerdns pdnsutil create-zone customerb.example.com
-	docker exec -it powerdns pdnsutil add-record example.com www.example.com A 1.2.3.4
+	docker exec -it powerdns pdnsutil add-record example.com www. A 1.2.3.4
 	docker exec -it powerdns pdnsutil list-zone example.com
 
 .PHONY: pdns-rm
