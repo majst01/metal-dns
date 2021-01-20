@@ -51,7 +51,7 @@ message DomainResponse {
 
 message Record {
 	string uuid = 1;
-	string type = 2;
+	RecordType type = 2;
 	string name = 3;
 	string data = 4;
 	int32 priority = 5;
@@ -61,17 +61,35 @@ message Record {
 	int32 flags = 9;
 	string tag = 10;
 }
+
+enum RecordType {
+	A = 0;
+	AAAA = 2;
+	CNAME = 3;
+	MX = 4;
+	NS = 5;
+	TXT = 6;
+	RP = 7;
+	SOA = 8;
+	HINFO = 9;
+	SRV = 10;
+	DNANE =11;
+	TLSA = 12;
+	DS = 13;
+	CAA = 14;
+	ANY = 15;
+}
+
 message RecordsListRequest {
 	string domain = 1;
-    google.protobuf.StringValue uuid = 2;
-    google.protobuf.StringValue type = 3;
+    RecordType type = 3;
     google.protobuf.StringValue name = 4;
 }
 message RecordGetRequest {
     string uuid = 1;
 }
 message RecordCreateRequest {
-    string type = 2;
+    RecordType type = 2;
 	string name = 3;
 	string data = 4;
 	int32 priority = 5;
@@ -83,7 +101,7 @@ message RecordCreateRequest {
 }
 message RecordUpdateRequest {
     string uuid = 1;
-    string type = 2;
+    RecordType type = 2;
 	string name = 3;
 	string data = 4;
 	int32 priority = 5;

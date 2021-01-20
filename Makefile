@@ -37,7 +37,18 @@ client:
 
 .PHONY: pdns-up
 pdns-up: pdns-rm
-	docker run -d --name powerdns -it --rm -p 8081:8081 -p 5533:53 powerdns/pdns-auth-44 --loglevel=5 --webserver=yes --webserver-address=0.0.0.0 --webserver-allow-from=0.0.0.0/0 --webserver-loglevel=detailed --api=yes --api-key=apipw
+	docker run -d --name powerdns -it --rm -p 8081:80 -p 5533:53 powerdns/pdns-auth-44 \
+		--api=yes \
+		--api-key=apipw \
+		--webserver=yes \
+		--webserver-address=0.0.0.0 \
+		--webserver-port=80 \
+		--webserver-allow-from=0.0.0.0/0 \
+		--disable-syslog=yes \
+		--loglevel=9 \
+		--log-dns-queries=yes \
+		--log-dns-details=yes \
+		--query-logging=yes
 	docker exec -it powerdns pdnsutil create-zone example.com
 	docker exec -it powerdns pdnsutil create-zone customera.example.com
 	docker exec -it powerdns pdnsutil create-zone customerb.example.com

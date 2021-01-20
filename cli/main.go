@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/majst01/metal-dns/pkg/auth"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	v1 "github.com/majst01/metal-dns/api/v1"
 	"github.com/majst01/metal-dns/pkg/client"
@@ -46,7 +45,7 @@ func run(c client.Client, log *zap.Logger) {
 	defer cancel()
 	ds, err := c.Domain().List(ctx, &v1.DomainsListRequest{})
 	if err != nil {
-		log.Error("could not create prefix", zap.Error(err))
+		log.Error("could not create domain", zap.Error(err))
 	}
 	log.Sugar().Infow("list domains", "domains", ds.Domains)
 
@@ -70,7 +69,7 @@ func run(c client.Client, log *zap.Logger) {
 	// create record
 	rcr := &v1.RecordCreateRequest{
 		Name: "www.a.example.com",
-		Type: "A",
+		Type: v1.RecordType_A,
 		Ttl:  3600,
 		Data: "1.2.3.4",
 	}
@@ -81,7 +80,7 @@ func run(c client.Client, log *zap.Logger) {
 		log.Sugar().Infow("created record", "record", r.Record)
 	}
 
-	rlr := &v1.RecordsListRequest{Domain: "example.com", Type: wrapperspb.String("A")}
+	rlr := &v1.RecordsListRequest{Domain: "example.com", Type: v1.RecordType_A}
 	records, err := c.Record().List(ctx, rlr)
 	if err != nil {
 		log.Error("could not list records", zap.Error(err))

@@ -41,13 +41,13 @@ func (r *RecordService) List(ctx context.Context, req *v1.RecordsListRequest) (*
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	recordSearch := byAny
-	if req.Name != nil && req.Type == nil {
+	if req.Name != nil && req.Type == v1.RecordType_ANY {
 		recordSearch = byName
 	}
-	if req.Type != nil && req.Name == nil {
+	if req.Type != v1.RecordType_ANY && req.Name == nil {
 		recordSearch = byType
 	}
-	if req.Name != nil && req.Type != nil {
+	if req.Name != nil && req.Type != v1.RecordType_ANY {
 		recordSearch = byNameAndType
 	}
 	records := []*v1.Record{}
@@ -62,11 +62,11 @@ func (r *RecordService) List(ctx context.Context, req *v1.RecordsListRequest) (*
 					record = toV1Record(r, rset)
 				}
 			case byType:
-				if req.Type.Value == string(*rset.Type) {
+				if req.Type.String() == string(*rset.Type) {
 					record = toV1Record(r, rset)
 				}
 			case byNameAndType:
-				if req.Name.Value == *rset.Name && req.Type.Value == string(*rset.Type) {
+				if req.Name.Value == *rset.Name && req.Type.String() == string(*rset.Type) {
 					record = toV1Record(r, rset)
 				}
 			}
@@ -76,15 +76,6 @@ func (r *RecordService) List(ctx context.Context, req *v1.RecordsListRequest) (*
 		}
 	}
 	return &v1.RecordsResponse{Records: records}, nil
-}
-
-func toV1Record(r powerdns.Record, rset powerdns.RRset) *v1.Record {
-	return &v1.Record{
-		Name: *rset.Name,
-		Data: *r.Content,
-		Ttl:  int32(*rset.TTL),
-		Type: string(*rset.Type),
-	}
 }
 
 func (r *RecordService) Get(ctx context.Context, req *v1.RecordGetRequest) (*v1.RecordResponse, error) {
@@ -112,4 +103,49 @@ func (r *RecordService) Update(ctx context.Context, req *v1.RecordUpdateRequest)
 }
 func (r *RecordService) Delete(ctx context.Context, req *v1.RecordDeleteRequest) (*v1.RecordResponse, error) {
 	return nil, nil
+}
+
+// Helper
+
+func toV1Record(r powerdns.Record, rset powerdns.RRset) *v1.Record {
+	return &v1.Record{
+		Name: *rset.Name,
+		Data: *r.Content,
+		Ttl:  int32(*rset.TTL),
+		Type: toV1RecordType(rset.Type),
+	}
+}
+
+func toV1RecordType(t *powerdns.RRType) v1.RecordType {
+	switch *t {
+	case powerdns.RRTypeA:
+		return v1.RecordType_A
+	case powerdns.RRTypeAAAA:
+		return v1.RecordType_AAAA
+	case powerdns.RRTypeCAA:
+		return v1.RecordType_CAA
+	case powerdns.RRTypeCNAME:
+		return v1.RecordType_CNAME
+	case powerdns.RRTypeDNAME:
+		return v1.RecordType_DNANE
+	case powerdns.RRTypeDS:
+		return v1.RecordType_DS
+	case powerdns.RRTypeHINFO:
+		return v1.RecordType_HINFO
+	case powerdns.RRTypeMX:
+		return v1.RecordType_MX
+	case powerdns.RRTypeNS:
+		return v1.RecordType_NS
+	case powerdns.RRTypeRP:
+		return v1.RecordType_RP
+	case powerdns.RRTypeSOA:
+		return v1.RecordType_SOA
+	case powerdns.RRTypeSRV:
+		return v1.RecordType_SRV
+	case powerdns.RRTypeTLSA:
+		return v1.RecordType_TLSA
+	case powerdns.RRTypeTXT:
+		return v1.RecordType_TXT
+	}
+	return v1.RecordType_ANY
 }
