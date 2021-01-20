@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/majst01/metal-dns/pkg/auth"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	v1 "github.com/majst01/metal-dns/api/v1"
 	"github.com/majst01/metal-dns/pkg/client"
@@ -76,7 +77,16 @@ func run(c client.Client, log *zap.Logger) {
 	r, err := c.Record().Create(ctx, rcr)
 	if err != nil {
 		log.Error("could not create record", zap.Error(err))
+	} else {
+		log.Sugar().Infow("created record", "record", r.Record)
 	}
-	log.Sugar().Infow("created record", "record", r.Record)
+
+	rlr := &v1.RecordsListRequest{Domain: "example.com", Type: wrapperspb.String("A")}
+	records, err := c.Record().List(ctx, rlr)
+	if err != nil {
+		log.Error("could not list records", zap.Error(err))
+	} else {
+		log.Sugar().Infow("list records", "records", records.Records)
+	}
 
 }

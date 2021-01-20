@@ -25,25 +25,68 @@ func NewRecordService(l *zap.Logger, baseURL string, vHost string, apikey string
 		log:  l,
 	}
 }
+
+type recordSearchType int
+
+const (
+	byAny recordSearchType = iota
+	byName
+	byType
+	byNameAndType
+)
+
 func (r *RecordService) List(ctx context.Context, req *v1.RecordsListRequest) (*v1.RecordsResponse, error) {
 	zone, err := r.pdns.Zones.Get(req.Domain)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+	recordSearch := byAny
+	if req.Name != nil && req.Type == nil {
+		recordSearch = byName
+	}
+	if req.Type != nil && req.Name == nil {
+		recordSearch = byType
+	}
+	if req.Name != nil && req.Type != nil {
+		recordSearch = byNameAndType
+	}
 	records := []*v1.Record{}
 	for _, rset := range zone.RRsets {
 		for _, r := range rset.Records {
-			record := &v1.Record{
-				Name: *rset.Name,
-				Data: *r.Content,
-				Ttl:  int32(*rset.TTL),
-				Type: string(*rset.Type),
+			var record *v1.Record
+			switch recordSearch {
+			case byAny:
+				record = toV1Record(r, rset)
+			case byName:
+				if req.Name.Value == *rset.Name {
+					record = toV1Record(r, rset)
+				}
+			case byType:
+				if req.Type.Value == string(*rset.Type) {
+					record = toV1Record(r, rset)
+				}
+			case byNameAndType:
+				if req.Name.Value == *rset.Name && req.Type.Value == string(*rset.Type) {
+					record = toV1Record(r, rset)
+				}
 			}
-			records = append(records, record)
+			if record != nil {
+				records = append(records, record)
+			}
 		}
 	}
 	return &v1.RecordsResponse{Records: records}, nil
 }
+
+func toV1Record(r powerdns.Record, rset powerdns.RRset) *v1.Record {
+	return &v1.Record{
+		Name: *rset.Name,
+		Data: *r.Content,
+		Ttl:  int32(*rset.TTL),
+		Type: string(*rset.Type),
+	}
+}
+
 func (r *RecordService) Get(ctx context.Context, req *v1.RecordGetRequest) (*v1.RecordResponse, error) {
 	return nil, nil
 }
