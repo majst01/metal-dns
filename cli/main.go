@@ -57,7 +57,7 @@ func run(c client.Client, log *zap.Logger) {
 	// create
 	dcr := &v1.DomainCreateRequest{
 		Name:        "a.example.com",
-		Nameservers: []string{"localhost."},
+		Nameservers: []string{"ns1.example.com."},
 	}
 	d, err := c.Domain().Create(ctx, dcr)
 	if err != nil {

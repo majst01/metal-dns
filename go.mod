@@ -11,6 +11,7 @@ require (
 	github.com/metal-stack/metal-lib v0.6.9
 	github.com/metal-stack/security v0.4.0
 	github.com/metal-stack/v v1.0.2
+	github.com/miekg/dns v1.1.35
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.9.0
 	github.com/spf13/cobra v1.1.1

@@ -49,11 +49,15 @@ pdns-up: pdns-rm
 		--log-dns-queries=yes \
 		--log-dns-details=yes \
 		--query-logging=yes
-	docker exec -it powerdns pdnsutil create-zone example.com
-	docker exec -it powerdns pdnsutil create-zone customera.example.com
-	docker exec -it powerdns pdnsutil create-zone customerb.example.com
+	docker exec -it powerdns pdnsutil create-zone example.com ns1.example.com
+	docker exec -it powerdns pdnsutil create-zone customera.example.com ns1.example.com
+	docker exec -it powerdns pdnsutil create-zone customerb.example.com ns1.example.com
 	docker exec -it powerdns pdnsutil add-record example.com www. A 1.2.3.4
 	docker exec -it powerdns pdnsutil list-zone example.com
+
+.PHONY: query
+query:
+	dig a www.example.com @127.0.0.1 -p 5533 +tcp
 
 .PHONY: pdns-rm
 pdns-rm:

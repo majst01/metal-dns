@@ -24,7 +24,7 @@ service RecordService {
 
 message Domain {
 	string name = 1;
-	int32 ttl = 2;
+	uint32 ttl = 2;
 	string zone_file = 3;
 }
 
@@ -50,13 +50,12 @@ message DomainResponse {
 // Records
 
 message Record {
-	string uuid = 1;
 	RecordType type = 2;
 	string name = 3;
 	string data = 4;
 	int32 priority = 5;
-	int32 port = 6;
-	int32 ttl = 7;
+	uint32 port = 6;
+	uint32 ttl = 7;
 	int32 weight = 8;
 	int32 flags = 9;
 	string tag = 10;
@@ -93,8 +92,8 @@ message RecordCreateRequest {
 	string name = 3;
 	string data = 4;
 	int32 priority = 5;
-	int32 port = 6;
-	int32 ttl = 7;
+	uint32 port = 6;
+	uint32 ttl = 7;
 	int32 weight = 8;
 	int32 flags = 9;
     string tag = 10;
@@ -105,14 +104,16 @@ message RecordUpdateRequest {
 	string name = 3;
 	string data = 4;
 	int32 priority = 5;
-	int32 port = 6;
-	int32 ttl = 7;
+	uint32 port = 6;
+	uint32 ttl = 7;
 	int32 weight = 8;
 	int32 flags = 9;
 	string tag = 10;
 }
 message RecordDeleteRequest {
-    string uuid = 1;
+	RecordType type = 2;
+	string name = 3;
+	string data = 4;
 }
 
 
