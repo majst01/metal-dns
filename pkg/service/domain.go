@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/joeig/go-powerdns/v2"
+	"github.com/joeig/go-powerdns/v3"
 	v1 "github.com/majst01/metal-dns/api/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -24,7 +24,7 @@ func NewDomainService(l *zap.Logger, baseURL string, vHost string, apikey string
 	}
 }
 func (d *DomainService) List(ctx context.Context, req *v1.DomainsListRequest) (*v1.DomainsResponse, error) {
-	zones, err := d.pdns.Zones.List()
+	zones, err := d.pdns.Zones.List(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -39,7 +39,7 @@ func (d *DomainService) List(ctx context.Context, req *v1.DomainsListRequest) (*
 }
 
 func (d *DomainService) Get(ctx context.Context, req *v1.DomainGetRequest) (*v1.DomainResponse, error) {
-	zone, err := d.pdns.Zones.Get(req.Name)
+	zone, err := d.pdns.Zones.Get(ctx, req.Name)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
@@ -62,7 +62,7 @@ func (d *DomainService) Create(ctx context.Context, req *v1.DomainCreateRequest)
 		APIRectify:  powerdns.Bool(false),
 		Nameservers: req.Nameservers,
 	}
-	zone, err := d.pdns.Zones.Add(zone)
+	zone, err := d.pdns.Zones.Add(ctx, zone)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -72,7 +72,7 @@ func (d *DomainService) Create(ctx context.Context, req *v1.DomainCreateRequest)
 	return &v1.DomainResponse{Domain: domain}, nil
 }
 func (d *DomainService) Delete(ctx context.Context, req *v1.DomainDeleteRequest) (*v1.DomainResponse, error) {
-	err := d.pdns.Zones.Delete(req.Name)
+	err := d.pdns.Zones.Delete(ctx, req.Name)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

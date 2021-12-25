@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/joeig/go-powerdns/v2"
+	"github.com/joeig/go-powerdns/v3"
 	v1 "github.com/majst01/metal-dns/api/v1"
 	"github.com/miekg/dns"
 	"go.uber.org/zap"
@@ -37,7 +37,7 @@ const (
 )
 
 func (r *RecordService) List(ctx context.Context, req *v1.RecordsListRequest) (*v1.RecordsResponse, error) {
-	zone, err := r.pdns.Zones.Get(req.Domain)
+	zone, err := r.pdns.Zones.Get(ctx, req.Domain)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -93,7 +93,7 @@ func (r *RecordService) Create(ctx context.Context, req *v1.RecordCreateRequest)
 	}
 	rrtype := powerdns.RRType(req.Type)
 	r.log.Sugar().Infof("create record domain:%s name:%s type:%s", domain, req.Name, rrtype)
-	err = r.pdns.Records.Add(domain, req.Name, rrtype, req.Ttl, []string{req.Data})
+	err = r.pdns.Records.Add(ctx, domain, req.Name, rrtype, req.Ttl, []string{req.Data})
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -112,7 +112,7 @@ func (r *RecordService) Update(ctx context.Context, req *v1.RecordUpdateRequest)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	rrtype := powerdns.RRType(req.Type)
-	err = r.pdns.Records.Change(domain, req.Name, rrtype, req.Ttl, []string{req.Data})
+	err = r.pdns.Records.Change(ctx, domain, req.Name, rrtype, req.Ttl, []string{req.Data})
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -131,7 +131,7 @@ func (r *RecordService) Delete(ctx context.Context, req *v1.RecordDeleteRequest)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	rrtype := powerdns.RRType(req.Type)
-	err = r.pdns.Records.Delete(domain, req.Name, rrtype)
+	err = r.pdns.Records.Delete(ctx, domain, req.Name, rrtype)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
