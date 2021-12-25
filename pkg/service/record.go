@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gogo/status"
 	"github.com/joeig/go-powerdns/v2"
 	v1 "github.com/majst01/metal-dns/api/v1"
 	"github.com/miekg/dns"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type RecordService struct {
@@ -132,6 +132,9 @@ func (r *RecordService) Delete(ctx context.Context, req *v1.RecordDeleteRequest)
 	}
 	rrtype := powerdns.RRType(req.Type)
 	err = r.pdns.Records.Delete(domain, req.Name, rrtype)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
 
 	record := &v1.Record{
 		Name: req.Name,
@@ -195,6 +198,7 @@ func toV1RecordType(t *powerdns.RRType) v1.RecordType {
 		return v1.RecordType_TLSA
 	case powerdns.RRTypeTXT:
 		return v1.RecordType_TXT
+
 	}
 	return v1.RecordType_ANY
 }

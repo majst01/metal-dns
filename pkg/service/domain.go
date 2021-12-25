@@ -4,11 +4,11 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/gogo/status"
 	"github.com/joeig/go-powerdns/v2"
 	v1 "github.com/majst01/metal-dns/api/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type DomainService struct {
