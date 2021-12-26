@@ -20,6 +20,7 @@ import (
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+
 	apiv1 "github.com/majst01/metal-dns/api/v1"
 	"github.com/majst01/metal-dns/pkg/service"
 

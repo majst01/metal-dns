@@ -20,3 +20,8 @@ Example JWT Payload:
   ]
 }
 ```
+
+## TODO
+
+- consider libdns compatibility https://github.com/libdns
+- try first external-dns implementation https://github.com/kubernetes-sigs/external-dns

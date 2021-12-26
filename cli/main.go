@@ -40,7 +40,6 @@ func main() {
 }
 
 func run(c client.Client, log *zap.Logger) {
-
 	ctx, cancel := context.WithTimeout(context.Background(), grpcRequestTimeout)
 	defer cancel()
 	ds, err := c.Domain().List(ctx, &v1.DomainsListRequest{})
@@ -87,5 +86,4 @@ func run(c client.Client, log *zap.Logger) {
 	} else {
 		log.Sugar().Infow("list records", "records", records.Records)
 	}
-
 }

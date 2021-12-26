@@ -33,11 +33,9 @@ client:
 	go build -tags netgo -o bin/client cli/main.go
 	strip bin/client
 
-
-
 .PHONY: pdns-up
 pdns-up: pdns-rm
-	docker run -d --name powerdns -it --rm -p 8081:80 -p 5533:53 powerdns/pdns-auth-44 \
+	docker run -d --name powerdns -it --rm -p 8081:80 -p 5533:53 powerdns/pdns-auth-46 \
 		--api=yes \
 		--api-key=apipw \
 		--webserver=yes \
@@ -65,6 +63,8 @@ pdns-rm:
 
 .PHONY: certs
 certs:
-	cd certs && cfssl gencert -initca ca-csr.json | cfssljson -bare ca -
-	cd certs && cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile client-server server.json | cfssljson -bare server -
-	cd certs && cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile client client.json | cfssljson -bare client -
+	cd certs
+		cfssl gencert -initca ca-csr.json | cfssljson -bare ca -
+		cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile client-server server.json | cfssljson -bare server -
+		cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile client client.json | cfssljson -bare client -
+	cd -
