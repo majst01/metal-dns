@@ -98,3 +98,12 @@ func (r *regoDecider) ListPermissions(ctx context.Context) ([]string, error) {
 
 	return ps, nil
 }
+
+func newOpaRequest(method string, req interface{}, token, secret string) map[string]interface{} {
+	return map[string]interface{}{
+		"method":  method,
+		"request": req,
+		"token":   token,
+		"secret":  secret,
+	}
+}

@@ -3,7 +3,7 @@ package api.v1.metalstack.io.authz
 default allow = false
 
 allow {
-    # is_token_valid
+    is_token_valid
     action_allowed
 }
 
@@ -19,7 +19,11 @@ action_allowed {
   # input.request == null
 }
 
+action_allowed {
+  input.method == "/v1.RecordService/List"
+}
+
 
 token := {"valid": valid, "payload": payload} {
-    [valid, _, payload] := io.jwt.decode_verify(input.token, {"secret": "secret"})
+    [valid, _, payload] := io.jwt.decode_verify(input.token, {"secret": input.secret})
 }

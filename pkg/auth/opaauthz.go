@@ -33,6 +33,7 @@ type OpaAuthorizer struct {
 	credentialHeader string
 	regoDecider      *regoDecider
 	log              *zap.Logger
+	secret           string
 }
 
 // A AuthzOption sets options such as url, used headers etc.
@@ -50,6 +51,13 @@ func CredentialHeader(headerName string) AuthzOption {
 func Logger(log *zap.Logger) AuthzOption {
 	return func(o *OpaAuthorizer) {
 		o.log = log
+	}
+}
+
+// JWTSecret set the jwt secret
+func JWTSecret(secret string) AuthzOption {
+	return func(o *OpaAuthorizer) {
+		o.secret = secret
 	}
 }
 
@@ -98,9 +106,7 @@ func (authz *OpaAuthorizer) authorize(ctx context.Context, methodName string, re
 		if token, exists := md[authz.credentialHeader]; exists {
 			parts := strings.Split(token[0], " ")
 			jwt := parts[1]
-			authz.log.Sugar().Infow("authorize", "oparequest", newOpaRequest(methodName, req, jwt))
-
-			ok, err := authz.regoDecider.Decide(ctx, newOpaRequest(methodName, req, token[0]))
+			ok, err := authz.regoDecider.Decide(ctx, newOpaRequest(methodName, req, jwt, authz.secret))
 			if err != nil {
 				authz.log.Sugar().Errorw("rego", "decision error", err)
 			}
@@ -121,20 +127,4 @@ func (authz *OpaAuthorizer) authorize(ctx context.Context, methodName string, re
 	}
 
 	return errors.New("empty metadata")
-}
-
-type opaSuccessResponse struct {
-	Allowed bool `json:"result"`
-}
-
-type opaRequest struct {
-	Input map[string]interface{} `json:"input"`
-}
-
-func newOpaRequest(method string, req interface{}, token string) map[string]interface{} {
-	return map[string]interface{}{
-		"method":  method,
-		"request": req,
-		"token":   token,
-	}
 }

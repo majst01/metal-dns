@@ -129,7 +129,7 @@ func run() {
 		MinVersion:   tls.VersionTLS12,
 	})
 
-	authz, err := auth.NewOpaAuthorizer(auth.Logger(logger))
+	authz, err := auth.NewOpaAuthorizer(auth.Logger(logger), auth.JWTSecret("secret"))
 	if err != nil {
 		logger.Fatal("failed to create authorizer", zap.Error(err))
 	}

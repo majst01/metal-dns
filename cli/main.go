@@ -46,12 +46,13 @@ func run(c client.Client, log *zap.Logger) {
 	}
 	log.Sugar().Infow("list domains", "domains", ds.Domains)
 
-	if true {
-		return
-	}
 	rs, err := c.Record().List(ctx, &v1.RecordsListRequest{Domain: "example.com"})
 	if err != nil {
 		log.Error("could not list records", zap.Error(err))
+	}
+
+	if true {
+		return
 	}
 	log.Sugar().Infow("list records", "records", rs.Records)
 	// create
