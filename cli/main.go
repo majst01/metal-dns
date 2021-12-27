@@ -19,7 +19,7 @@ func main() {
 
 	token := os.Getenv("JWT_TOKEN")
 	if token == "" {
-		token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJuYmYiOjE1MTYyMzkwMjIsImRvbWFpbnMiOlsiYS5leGFtcGxlLmNvbSIsImIuZXhhbXBsZS5jb20iXX0.jPEP4TKNpmAcDz_y6AK3wtDr6UOpE69dAylp_qwUNGU"
+		token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJuYmYiOjE1MTYyMzkwMjIsImRvbWFpbnMiOlsiZXhhbXBsZS5jb20iLCJhLmV4YW1wbGUuY29tIiwiYi5leGFtcGxlLmNvbSJdfQ.A1QGX_VasIfis2L0lWNKXtrvuPJTbJtoVrKvvelACvI"
 	}
 
 	c, err := client.NewClient(context.TODO(), "localhost", 50051, "certs/client.pem", "certs/client-key.pem", "certs/ca.pem", token, logger)
@@ -51,9 +51,6 @@ func run(c client.Client, log *zap.Logger) {
 		log.Error("could not list records", zap.Error(err))
 	}
 
-	if true {
-		return
-	}
 	log.Sugar().Infow("list records", "records", rs.Records)
 	// create
 	dcr := &v1.DomainCreateRequest{
