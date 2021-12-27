@@ -7,13 +7,6 @@ allow {
     action_allowed
 }
 
-is_token_valid {
-  token.valid
-  now := time.now_ns() / 1000000000
-  token.payload.nbf <= now
-  # now < token.payload.exp
-}
-
 action_allowed {
   input.method == "/v1.DomainService/List"
 }
@@ -37,6 +30,13 @@ domain_name_allowed {
     some i
     domain := token.payload.domains[i]
     endswith(input.request.name, domain)
+}
+
+is_token_valid {
+  token.valid
+  now := time.now_ns() / 1000000000
+  token.payload.nbf <= now
+  # now < token.payload.exp
 }
 
 token := {"valid": valid, "payload": payload} {
