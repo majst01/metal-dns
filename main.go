@@ -129,6 +129,7 @@ func run() {
 		MinVersion:   tls.VersionTLS12,
 	})
 
+	// FIXME make secret configurable
 	authz, err := auth.NewOpaAuther(auth.Logger(logger), auth.JWTSecret("secret"))
 	if err != nil {
 		logger.Fatal("failed to create authorizer", zap.Error(err))
@@ -164,9 +165,12 @@ func run() {
 
 	domainService := service.NewDomainService(logger, "http://localhost:8081", "localhost", "apipw", nil)
 	recordService := service.NewRecordService(logger, "http://localhost:8081", "localhost", "apipw", nil)
+	// FIXME make secret configurable
+	tokenService := service.NewTokenService(logger, "secret")
 
 	apiv1.RegisterDomainServiceServer(grpcServer, domainService)
 	apiv1.RegisterRecordServiceServer(grpcServer, recordService)
+	apiv1.RegisterTokenServiceServer(grpcServer, tokenService)
 
 	// After all your registrations, make sure all of the Prometheus metrics are initialized.
 	grpc_prometheus.Register(grpcServer)

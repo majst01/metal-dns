@@ -3,6 +3,11 @@ package api.v1.metalstack.io.authz
 default allow = false
 
 allow {
+  # FIXME add some sort of admin auth
+  input.method == "/v1.TokenService/Create"
+}
+
+allow {
     is_token_valid
     action_allowed
 }

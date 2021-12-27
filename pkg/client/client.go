@@ -18,6 +18,7 @@ import (
 type Client interface {
 	Domain() v1.DomainServiceClient
 	Record() v1.RecordServiceClient
+	Token() v1.TokenServiceClient
 	Close() error
 }
 
@@ -113,4 +114,9 @@ func (c GRPCClient) Domain() v1.DomainServiceClient {
 // Record is the root accessor for domain record related functions
 func (c GRPCClient) Record() v1.RecordServiceClient {
 	return v1.NewRecordServiceClient(c.conn)
+}
+
+// Token is the root accessor for domain record related functions
+func (c GRPCClient) Token() v1.TokenServiceClient {
+	return v1.NewTokenServiceClient(c.conn)
 }

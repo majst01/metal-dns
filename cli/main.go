@@ -40,6 +40,13 @@ func main() {
 func run(c client.Client, log *zap.Logger) {
 	ctx, cancel := context.WithTimeout(context.Background(), grpcRequestTimeout)
 	defer cancel()
+
+	token, err := c.Token().Create(ctx, &v1.TokenCreateRequest{Issuer: "John Doe", Domains: []string{"sample.com", "foo.bar"}})
+	if err != nil {
+		log.Error("could not create token", zap.Error(err))
+	}
+	log.Sugar().Infow("create token", "token", token)
+
 	ds, err := c.Domain().List(ctx, &v1.DomainsListRequest{})
 	if err != nil {
 		log.Error("could not create domain", zap.Error(err))
