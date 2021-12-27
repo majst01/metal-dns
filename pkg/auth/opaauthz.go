@@ -114,17 +114,9 @@ func (authz *OpaAuthorizer) authorize(ctx context.Context, methodName string, re
 				return nil
 			}
 			authz.log.Sugar().Errorw("rego decision was false")
-
-			// TODO implement rego check
-			// response := resp.Result().(*opaSuccessResponse)
-			// if response.Allowed {
-			// 	return nil
-			// }
 			return nil
 		}
-
 		return errors.New("unauthorized")
 	}
-
 	return errors.New("empty metadata")
 }

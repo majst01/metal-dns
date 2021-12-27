@@ -50,15 +50,15 @@ message DomainResponse {
 // Records
 
 message Record {
-	RecordType type = 2;
-	string name = 3;
-	string data = 4;
-	int32 priority = 5;
-	uint32 port = 6;
-	uint32 ttl = 7;
-	int32 weight = 8;
-	int32 flags = 9;
-	string tag = 10;
+	RecordType type = 1;
+	string name = 2;
+	string data = 3;
+	int32 priority = 4;
+	uint32 port = 5;
+	uint32 ttl = 6;
+	int32 weight = 7;
+	int32 flags = 8;
+	string tag = 9;
 }
 
 enum RecordType {
@@ -81,22 +81,22 @@ enum RecordType {
 
 message RecordsListRequest {
 	string domain = 1;
-    RecordType type = 3;
-    google.protobuf.StringValue name = 4;
+    RecordType type = 2;
+    google.protobuf.StringValue name = 3;
 }
 message RecordGetRequest {
     string uuid = 1;
 }
 message RecordCreateRequest {
-    RecordType type = 2;
-	string name = 3;
-	string data = 4;
-	int32 priority = 5;
-	uint32 port = 6;
-	uint32 ttl = 7;
-	int32 weight = 8;
-	int32 flags = 9;
-    string tag = 10;
+    RecordType type = 1;
+	string name = 2;
+	string data = 3;
+	int32 priority = 4;
+	uint32 port = 5;
+	uint32 ttl = 6;
+	int32 weight = 7;
+	int32 flags = 8;
+    string tag = 9;
 }
 message RecordUpdateRequest {
     string uuid = 1;
@@ -111,9 +111,9 @@ message RecordUpdateRequest {
 	string tag = 10;
 }
 message RecordDeleteRequest {
-	RecordType type = 2;
-	string name = 3;
-	string data = 4;
+	RecordType type = 1;
+	string name = 2;
+	string data = 3;
 }
 
 

@@ -14,9 +14,8 @@ import (
 // ideas are taken from: https://www.openpolicyagent.org/docs/latest/integration/#integrating-with-the-go-api
 
 type regoDecider struct {
-	log          *zap.SugaredLogger
-	qDecision    *rego.PreparedEvalQuery
-	qPermissions *rego.PreparedEvalQuery
+	log       *zap.SugaredLogger
+	qDecision *rego.PreparedEvalQuery
 }
 
 func newRegoDecider(log *zap.SugaredLogger) (*regoDecider, error) {
@@ -73,30 +72,6 @@ func (r *regoDecider) Decide(ctx context.Context, input map[string]interface{}) 
 	}
 
 	return allow, nil
-}
-
-func (r *regoDecider) ListPermissions(ctx context.Context) ([]string, error) {
-	results, err := r.qPermissions.Eval(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error evaluating rego result set %w", err)
-	}
-
-	if len(results) == 0 {
-		return nil, fmt.Errorf("error evaluating rego result set: results have no length")
-	}
-
-	set, ok := results[0].Bindings["x"].([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("error evaluating rego result set: unexpected response type")
-	}
-
-	var ps []string
-	for _, p := range set {
-		p := p.(string)
-		ps = append(ps, p)
-	}
-
-	return ps, nil
 }
 
 func newOpaRequest(method string, req interface{}, token, secret string) map[string]interface{} {
