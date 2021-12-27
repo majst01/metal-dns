@@ -116,7 +116,6 @@ message RecordDeleteRequest {
 	string data = 3;
 }
 
-
 message RecordsResponse {
     repeated Record records = 1;
 }
