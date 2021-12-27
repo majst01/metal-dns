@@ -7,9 +7,6 @@ import (
 	"fmt"
 	"os"
 
-	"errors"
-
-	"github.com/majst01/metal-dns/pkg/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
@@ -26,13 +23,12 @@ type Client interface {
 
 // GRPCClient is a Client implementation with grpc transport.
 type GRPCClient struct {
-	conn    *grpc.ClientConn
-	log     *zap.Logger
-	hmacKey string
+	conn *grpc.ClientConn
+	log  *zap.Logger
 }
 
 // NewClient creates a new client for the services for the given address, with the certificate and hmac.
-func NewClient(ctx context.Context, hostname string, port int, certFile string, keyFile string, caFile string, hmacKey string, logger *zap.Logger) (Client, error) {
+func NewClient(ctx context.Context, hostname string, port int, certFile string, keyFile string, caFile string, token string, logger *zap.Logger) (Client, error) {
 
 	address := fmt.Sprintf("%s:%d", hostname, port)
 
@@ -65,30 +61,17 @@ func NewClient(ctx context.Context, hostname string, port int, certFile string, 
 		MinVersion:   tls.VersionTLS12,
 	})
 
-	if hmacKey == "" {
-		return nil, errors.New("no hmac-key specified")
-	}
-
 	client := GRPCClient{
-		log:     logger,
-		hmacKey: hmacKey,
-	}
-
-	// Set up the credentials for the connection.
-	perRPCHMACAuthenticator, err := auth.NewHMACAuther(logger, hmacKey, auth.EditUser)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create hmac-authenticator %w", err)
+		log: logger,
 	}
 
 	opts := []grpc.DialOption{
-		// In addition to the following grpc.DialOption, callers may also use
-		// the grpc.CallOption grpc.PerRPCCredentials with the RPC invocation
-		// itself.
-		// See: https://godoc.org/google.golang.org/grpc#PerRPCCredentials
-		grpc.WithPerRPCCredentials(perRPCHMACAuthenticator),
 		// oauth.NewOauthAccess requires the configuration of transport
 		// credentials.
 		grpc.WithTransportCredentials(creds),
+		grpc.WithPerRPCCredentials(tokenAuth{
+			token: token,
+		}),
 
 		// grpc.WithInsecure(),
 		grpc.WithBlock(),
@@ -101,6 +84,20 @@ func NewClient(ctx context.Context, hostname string, port int, certFile string, 
 	client.conn = conn
 
 	return client, nil
+}
+
+type tokenAuth struct {
+	token string
+}
+
+func (t tokenAuth) GetRequestMetadata(ctx context.Context, in ...string) (map[string]string, error) {
+	return map[string]string{
+		"Authorization": "Bearer " + t.token,
+	}, nil
+}
+
+func (tokenAuth) RequireTransportSecurity() bool {
+	return true
 }
 
 // Close the underlying connection

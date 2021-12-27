@@ -1,3 +1,4 @@
 bin
 *.pem
 *.csr
+coverage.out

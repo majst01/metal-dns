@@ -15,7 +15,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
@@ -97,15 +96,6 @@ func run() {
 
 	logger.Info("starting metal-dns", zap.Stringer("version", v.V), zap.String("address", addr))
 
-	hmacKey := viper.GetString("hmackey")
-	if hmacKey == "" {
-		hmacKey = auth.HmacDefaultKey
-	}
-	auther, err := auth.NewHMACAuther(logger, hmacKey, auth.EditUser)
-	if err != nil {
-		logger.Fatal("failed to create auther", zap.Error(err))
-	}
-
 	caFile := viper.GetString("ca")
 	// Get system certificate pool
 	certPool, err := x509.SystemCertPool()
@@ -133,11 +123,16 @@ func run() {
 	}
 
 	creds := credentials.NewTLS(&tls.Config{
-		ClientAuth:   tls.RequireAndVerifyClientCert,
+		ClientAuth:   tls.NoClientCert,
 		Certificates: []tls.Certificate{cert},
 		ClientCAs:    certPool,
 		MinVersion:   tls.VersionTLS12,
 	})
+
+	authz, err := auth.NewOpaAuthorizer(auth.Logger(logger))
+	if err != nil {
+		logger.Fatal("failed to create authorizer", zap.Error(err))
+	}
 
 	opts := []grpc.ServerOption{
 		// Enable TLS for all incoming connections.
@@ -146,17 +141,19 @@ func run() {
 			grpc_ctxtags.StreamServerInterceptor(),
 			grpc_prometheus.StreamServerInterceptor,
 			grpc_zap.StreamServerInterceptor(logger),
-			grpc_auth.StreamServerInterceptor(auther.Auth),
+			// grpc_auth.StreamServerInterceptor(auther.Auth),
 			grpc_internalerror.StreamServerInterceptor(),
 			grpc_recovery.StreamServerInterceptor(),
+			authz.OpaStreamInterceptor,
 		)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpc_ctxtags.UnaryServerInterceptor(),
 			grpc_prometheus.UnaryServerInterceptor,
 			grpc_zap.UnaryServerInterceptor(logger),
-			grpc_auth.UnaryServerInterceptor(auther.Auth),
+			// grpc_auth.UnaryServerInterceptor(auther.Auth),
 			grpc_internalerror.UnaryServerInterceptor(),
 			grpc_recovery.UnaryServerInterceptor(),
+			authz.OpaUnaryInterceptor,
 		)),
 	}
 

@@ -25,3 +25,4 @@ Example JWT Payload:
 
 - consider libdns compatibility https://github.com/libdns
 - try first external-dns implementation https://github.com/kubernetes-sigs/external-dns
+- implement health endpoint: https://stackoverflow.com/questions/59352845/how-to-implement-go-grpc-go-health-check

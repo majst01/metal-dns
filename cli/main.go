@@ -5,8 +5,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/majst01/metal-dns/pkg/auth"
-
 	v1 "github.com/majst01/metal-dns/api/v1"
 	"github.com/majst01/metal-dns/pkg/client"
 	"go.uber.org/zap"
@@ -19,12 +17,12 @@ func main() {
 	logger, _ := zap.NewProduction()
 	logger.Info("Starting Client")
 
-	hmacKey := os.Getenv("HMAC_KEY")
-	if hmacKey == "" {
-		hmacKey = auth.HmacDefaultKey
+	token := os.Getenv("JWT_TOKEN")
+	if token == "" {
+		token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJuYmYiOjE1MTYyMzkwMjIsImRvbWFpbnMiOlsiYS5leGFtcGxlLmNvbSIsImIuZXhhbXBsZS5jb20iXX0.jPEP4TKNpmAcDz_y6AK3wtDr6UOpE69dAylp_qwUNGU"
 	}
 
-	c, err := client.NewClient(context.TODO(), "localhost", 50051, "certs/client.pem", "certs/client-key.pem", "certs/ca.pem", hmacKey, logger)
+	c, err := client.NewClient(context.TODO(), "localhost", 50051, "certs/client.pem", "certs/client-key.pem", "certs/ca.pem", token, logger)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
@@ -48,6 +46,9 @@ func run(c client.Client, log *zap.Logger) {
 	}
 	log.Sugar().Infow("list domains", "domains", ds.Domains)
 
+	if true {
+		return
+	}
 	rs, err := c.Record().List(ctx, &v1.RecordsListRequest{Domain: "example.com"})
 	if err != nil {
 		log.Error("could not list records", zap.Error(err))
