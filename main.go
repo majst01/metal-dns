@@ -70,6 +70,8 @@ func init() {
 	rootCmd.Flags().StringP("cert", "", "certs/server.pem", "server certificate path")
 	rootCmd.Flags().StringP("certkey", "", "certs/server-key.pem", "server key path")
 
+	rootCmd.Flags().StringP("secret", "", "secret", "jwt signing secret")
+
 	// rootCmd.Flags().StringP("hmackey", "", auth.HmacDefaultKey, "preshared hmac key to authenticate.")
 
 	err := viper.BindPFlags(rootCmd.Flags())
@@ -129,8 +131,9 @@ func run() {
 		MinVersion:   tls.VersionTLS12,
 	})
 
-	// FIXME make secret configurable
-	authz, err := auth.NewOpaAuther(auth.Logger(logger), auth.JWTSecret("secret"))
+	secret := viper.GetString("secret")
+
+	authz, err := auth.NewOpaAuther(logger, secret)
 	if err != nil {
 		logger.Fatal("failed to create authorizer", zap.Error(err))
 	}
@@ -165,8 +168,7 @@ func run() {
 
 	domainService := service.NewDomainService(logger, "http://localhost:8081", "localhost", "apipw", nil)
 	recordService := service.NewRecordService(logger, "http://localhost:8081", "localhost", "apipw", nil)
-	// FIXME make secret configurable
-	tokenService := service.NewTokenService(logger, "secret")
+	tokenService := service.NewTokenService(logger, secret)
 
 	apiv1.RegisterDomainServiceServer(grpcServer, domainService)
 	apiv1.RegisterRecordServiceServer(grpcServer, recordService)

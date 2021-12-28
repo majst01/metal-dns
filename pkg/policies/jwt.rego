@@ -12,6 +12,7 @@ allow {
     action_allowed
 }
 
+# FIXME should only be allowed to list own domains or even better filtered to those
 action_allowed {
   input.method == "/v1.DomainService/List"
 }

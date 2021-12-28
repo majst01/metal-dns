@@ -39,40 +39,13 @@ type OpaAuther struct {
 	secret           string
 }
 
-// A AuthzOption sets options such as url, used headers etc.
-type AuthzOption func(*OpaAuther)
-
-// CredentialHeader is the name used to extract client credentials.
-// default: "authorization"
-func CredentialHeader(headerName string) AuthzOption {
-	return func(o *OpaAuther) {
-		o.credentialHeader = headerName
-	}
-}
-
-// Logger set the logger
-func Logger(log *zap.Logger) AuthzOption {
-	return func(o *OpaAuther) {
-		o.log = log.Sugar()
-	}
-}
-
-// JWTSecret set the jwt secret
-func JWTSecret(secret string) AuthzOption {
-	return func(o *OpaAuther) {
-		o.secret = secret
-	}
-}
-
 // NewOpaAuther creates an OPA authorizer
-func NewOpaAuther(options ...AuthzOption) (*OpaAuther, error) {
+func NewOpaAuther(log *zap.Logger, secret string) (*OpaAuther, error) {
 	authz := &OpaAuther{
 		credentialHeader: "authorization",
+		log:              log.Sugar(),
+		secret:           secret,
 	}
-	for _, opt := range options {
-		opt(authz)
-	}
-
 	files, err := policies.RegoPolicies.ReadDir(".")
 	if err != nil {
 		return nil, err

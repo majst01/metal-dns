@@ -62,6 +62,7 @@ test_list_domains_not_allowed_with_wrong_jwt {
         }
 }
 
+# FIXME should only be allowed to list own domains
 test_list_domains_allowed {
     allow with input as {
         "method":"/v1.DomainService/List",
