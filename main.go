@@ -72,7 +72,9 @@ func init() {
 
 	rootCmd.Flags().StringP("secret", "", "secret", "jwt signing secret")
 
-	// rootCmd.Flags().StringP("hmackey", "", auth.HmacDefaultKey, "preshared hmac key to authenticate.")
+	rootCmd.Flags().StringP("pdns-api-url", "", "http://localhost:8081", "powerdns api url")
+	rootCmd.Flags().StringP("pdns-api-password", "", "apipw", "powerdns api password")
+	rootCmd.Flags().StringP("pdns-api-vhost", "", "localhost", "powerdns vhost")
 
 	err := viper.BindPFlags(rootCmd.Flags())
 	if err != nil {
@@ -145,7 +147,6 @@ func run() {
 			grpc_ctxtags.StreamServerInterceptor(),
 			grpc_prometheus.StreamServerInterceptor,
 			grpc_zap.StreamServerInterceptor(logger),
-			// grpc_auth.StreamServerInterceptor(auther.Auth),
 			grpc_internalerror.StreamServerInterceptor(),
 			grpc_recovery.StreamServerInterceptor(),
 			authz.OpaStreamInterceptor,
@@ -154,7 +155,6 @@ func run() {
 			grpc_ctxtags.UnaryServerInterceptor(),
 			grpc_prometheus.UnaryServerInterceptor,
 			grpc_zap.UnaryServerInterceptor(logger),
-			// grpc_auth.UnaryServerInterceptor(auther.Auth),
 			grpc_internalerror.UnaryServerInterceptor(),
 			grpc_recovery.UnaryServerInterceptor(),
 			authz.OpaUnaryInterceptor,
@@ -166,8 +166,11 @@ func run() {
 	// grpcServer := grpc.NewServer(opts...)
 	grpcServer := grpc.NewServer(opts...)
 
-	domainService := service.NewDomainService(logger, "http://localhost:8081", "localhost", "apipw", nil)
-	recordService := service.NewRecordService(logger, "http://localhost:8081", "localhost", "apipw", nil)
+	pdnsApiURL := viper.GetString("pdns-api-url")
+	pdnsApiPassword := viper.GetString("pdns-api-password")
+	pdnsApiVHost := viper.GetString("pdns-api-vhost")
+	domainService := service.NewDomainService(logger, pdnsApiURL, pdnsApiVHost, pdnsApiPassword, nil)
+	recordService := service.NewRecordService(logger, pdnsApiURL, pdnsApiVHost, pdnsApiPassword, nil)
 	tokenService := service.NewTokenService(logger, secret)
 
 	apiv1.RegisterDomainServiceServer(grpcServer, domainService)
