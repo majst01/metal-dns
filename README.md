@@ -1,5 +1,11 @@
 # metal-dns
 
+[![Actions](https://github.com/majst01/metal-dns/workflows/build/badge.svg)](https://github.com/majst01/metal-dns/actions)
+[![GoDoc](https://pkg.go.dev/github.com/majst01/metal-dns?status.svg)](https://godoc.org/github.com/majst01/metal-dns)
+[![Go Report Card](https://goreportcard.com/badge/github.com/majst01/metal-dns)](https://goreportcard.com/report/github.com/majst01/metal-dns)
+[![codecov](https://codecov.io/gh/majst01/metal-dns/branch/master/graph/badge.svg)](https://codecov.io/gh/majst01/metal-dns)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/majst01/metal-dns/blob/master/LICENSE)
+
 Acts as a authorization proxy in front of a powerdns resolver. Metal-DNS will restrict access to specific domains and subdomains.
 Access to certain api actions can also be restricted.
 
