@@ -10,13 +10,13 @@ require (
 	github.com/joeig/go-powerdns/v3 v3.0.1
 	github.com/metal-stack/v v1.0.3
 	github.com/miekg/dns v1.1.45
-	github.com/open-policy-agent/opa v0.35.0
+	github.com/open-policy-agent/opa v0.36.0
 	github.com/prometheus/client_golang v1.11.0
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.0
 	github.com/testcontainers/testcontainers-go v0.12.0
-	go.uber.org/zap v1.19.1
+	go.uber.org/zap v1.20.0
 	google.golang.org/grpc v1.43.0
 	google.golang.org/protobuf v1.27.1
 )

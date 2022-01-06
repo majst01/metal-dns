@@ -12,7 +12,8 @@ all: test server client
 
 .PHONY: test
 test:
-	opa test  pkg/policies -v
+	opa fmt -w pkg/policies
+	opa test pkg/policies -v
 	CGO_ENABLED=1 $(GO) test ./... -coverprofile=coverage.out -covermode=atomic && go tool cover -func=coverage.out
 
 .PHONY: protoc

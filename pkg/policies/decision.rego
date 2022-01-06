@@ -4,7 +4,7 @@ default decision = {"allow": false, "isAdmin": false}
 
 admin(e) {
 	ae := sprintf("%s.admin", [e])
-    permissions[ae]
+	permissions[ae]
 }
 
 user(e) {
@@ -13,20 +13,20 @@ user(e) {
 
 decision = {"allow": true, "isAdmin": false} {
 	user(e.permission)
-    not admin(e.permission)
+	not admin(e.permission)
 }
 
 decision = {"allow": true, "isAdmin": true} {
-    admin(e.permission)
+	admin(e.permission)
 }
 
 decision = {"allow": false, "isAdmin": false, "reason": reason} {
-    not user(e.permission)
-    not admin(e.permission)
-    not e.public
-    reason := sprintf("missing permission on %s", [e.permission])
+	not user(e.permission)
+	not admin(e.permission)
+	not e.public
+	reason := sprintf("missing permission on %s", [e.permission])
 }
 
 decision = {"allow": true, "isAdmin": false} {
-    e.public
+	e.public
 }
