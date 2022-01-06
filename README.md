@@ -28,7 +28,7 @@ Example JWT Payload:
      "a.example.com",
      "b.example.com"
   ],
-  "permissions:" [
+  "permissions": [
     "/v1.DomainService/Get",
     "/v1.DomainService/List",
     "/v1.DomainService/Create",

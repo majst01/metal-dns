@@ -56,6 +56,27 @@ func TestDomainListCreate(t *testing.T) {
 	require.Equal(t, "www.example.com.", r1.Record.Name)
 	require.Equal(t, "1.2.3.4", r1.Record.Data)
 
+	rr, err := rs.List(ctx, &v1.RecordsListRequest{Domain: "example.com.", Type: v1.RecordType_A})
+	require.NoError(t, err)
+	require.NotNil(t, rr)
+	require.Len(t, rr.Records, 1)
+	require.Equal(t, "www.example.com.", rr.Records[0].Name)
+	require.Equal(t, "1.2.3.4", rr.Records[0].Data)
+
+	r1, err = rs.Update(ctx, &v1.RecordUpdateRequest{Type: v1.RecordType_A, Name: "www.example.com.", Data: "2.3.4.5", Ttl: uint32(300)})
+	require.NoError(t, err)
+	require.NotNil(t, r1)
+	require.Equal(t, "www.example.com.", r1.Record.Name)
+	require.Equal(t, "2.3.4.5", r1.Record.Data)
+	require.Equal(t, uint32(300), r1.Record.Ttl)
+
+	_, err = rs.Delete(ctx, &v1.RecordDeleteRequest{Type: v1.RecordType_A, Name: "www.example.com."})
+	require.NoError(t, err)
+	rr, err = rs.List(ctx, &v1.RecordsListRequest{Domain: "example.com.", Type: v1.RecordType_A})
+	require.NoError(t, err)
+	require.NotNil(t, rr)
+	require.Len(t, rr.Records, 0)
+
 	resp, err := ds.Delete(ctx, &v1.DomainDeleteRequest{Name: "example.com."})
 
 	require.NoError(t, err)
