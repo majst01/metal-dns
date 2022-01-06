@@ -39,7 +39,7 @@ jobs:
       run: |
         export GIT_TAG_NAME=${GITHUB_HEAD_REF##*/}
         make certs
-        make
+        make test
         make dockerimage
 
     - name: Push

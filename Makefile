@@ -38,11 +38,11 @@ client:
 
 .PHONY: dockerimage
 dockerimage:
-	DOCKER_BUILDKIT=1 docker build -t ghrc.io/majst01/metal-dns:${DOCKER_TAG} .
+	DOCKER_BUILDKIT=1 docker build -t ghcr.io/majst01/metal-dns:${DOCKER_TAG} .
 
 .PHONY: dockerpush
 dockerpush:
-	DOCKER_BUILDKIT=1 docker push ghrc.io/majst01/metal-dns:${DOCKER_TAG} 
+	DOCKER_BUILDKIT=1 docker push ghcr.io/majst01/metal-dns:${DOCKER_TAG} 
 
 .PHONY: pdns-up
 pdns-up: pdns-rm
