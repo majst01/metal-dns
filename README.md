@@ -3,7 +3,7 @@
 Acts as a authorization proxy in front of a powerdns resolver. Metal-DNS will restrict access to specific domains and subdomains.
 Access to certain api actions can also be restricted.
 
-A POC external-dns implementation is also available https://github.com/majst01/external-dns.
+A POC external-dns implementation is also available https://github.com/majst01/external-dns/tree/metal-dns-support .
 
 Open Topics:
 
