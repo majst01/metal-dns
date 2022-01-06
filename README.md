@@ -98,7 +98,16 @@ func main() {
     Nameservers: []string{"ns1.example.com."},
   }
   d, err := c.Domain().Create(ctx, dcr)
+  if err != nil {
+    panic(err)
+  }
   fmt.Println("Domain created:" + d)
+
+  r, err := c.Record().Create(ctx, &v1.RecordCreateRequest{Type: v1.RecordType_A, Name: "www.a.example.com.", Data: "1.2.3.4", Ttl: uint32(600)})
+  if err != nil {
+    panic(err)
+  }
+  fmt.Println("Record created:" + r)
 }
 
 ```

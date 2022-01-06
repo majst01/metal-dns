@@ -9,6 +9,6 @@ WORKDIR /work
 COPY . .
 RUN make certs server
 
-FROM alpine:3.14
+FROM alpine:3.15
 COPY --from=builder /work/bin/server /
 ENTRYPOINT [ "/server" ]
