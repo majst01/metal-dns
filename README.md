@@ -88,7 +88,10 @@ import (
 )
 
 func main() {
-  c, err = client.NewClient(context.Background(), client.DialConfig{Token: os.Getenv("JWT_TOKEN")})
+  dialConfig := client.DialConfig{
+    Token: os.Getenv("JWT_TOKEN"),
+  }
+  c, err = client.NewClient(context.Background(), dialConfig)
   if err != nil {
     panic(err)
   }
@@ -103,7 +106,14 @@ func main() {
   }
   fmt.Println("Domain created:" + d)
 
-  r, err := c.Record().Create(ctx, &v1.RecordCreateRequest{Type: v1.RecordType_A, Name: "www.a.example.com.", Data: "1.2.3.4", Ttl: uint32(600)})
+  rcr := &v1.RecordCreateRequest{
+    Type: v1.RecordType_A,
+    Name: "www.a.example.com.",
+    Data: "1.2.3.4",
+    Ttl: uint32(600),
+  }
+
+  r, err := c.Record().Create(ctx, rcr)
   if err != nil {
     panic(err)
   }
