@@ -44,6 +44,38 @@ Example JWT Payload:
 
 ## Usage
 
+### Server
+
+1.) start Powerdns:
+
+```bash
+docker run -d --name powerdns --rm -p 8081:80 -p 5533:53 powerdns/pdns-auth-46 \
+    --api=yes \
+    --api-key=apipw \
+    --webserver=yes \
+    --webserver-address=0.0.0.0 \
+    --webserver-port=80 \
+    --webserver-allow-from=0.0.0.0/0 \
+    --disable-syslog=yes \
+    --loglevel=9 \
+    --log-dns-queries=yes \
+    --log-dns-details=yes \
+    --query-logging=yes
+```
+
+2.) start metal-dns api server pointing to the powerdns api endpoint
+
+```bash
+make certs
+docker run -d --name metal-dns --rm -p 50051:50051 -v $PWD/certs:/certs ghcr.io/majst01/metal-dns:main \
+    --pdns-api-password=apipw \
+    --pdns-api-url=http://localhost:8081 \
+    --pdns-api-vhost=localhost \
+    --secret=YOUR-JWT-TOKEN-SECRET
+```
+
+### Client
+
 `go get github.com/majst01/metal-dns`
 
 ```go
