@@ -7,6 +7,7 @@ SHA := $(shell git rev-parse --short=8 HEAD)
 GITVERSION := $(shell git describe --long --all)
 BUILDDATE := $(shell date -Iseconds)
 VERSION := $(or ${VERSION},devel)
+DOCKER_TAG := $(or ${GIT_TAG_NAME}, latest)
 
 all: test server client
 
@@ -37,7 +38,11 @@ client:
 
 .PHONY: dockerimage
 dockerimage:
-	DOCKER_BUILDKIT=1 docker build -t metal-dns .
+	DOCKER_BUILDKIT=1 docker build -t ghrc.io/majst01/metal-dns:${DOCKER_TAG} .
+
+.PHONY: dockerpush
+dockerimage:
+	DOCKER_BUILDKIT=1 docker push ghrc.io/majst01/metal-dns:${DOCKER_TAG} 
 
 .PHONY: pdns-up
 pdns-up: pdns-rm

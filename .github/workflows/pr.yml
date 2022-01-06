@@ -37,8 +37,15 @@ jobs:
 
     - name: build and test
       run: |
+        export GIT_TAG_NAME=${GITHUB_HEAD_REF##*/}
         make certs
         make
-    
+        make dockerimage
+
+    - name: Push
+      run: |
+        export GIT_TAG_NAME=${GITHUB_HEAD_REF##*/}
+        make dockerpush
+
     - name: Publish Codecoverage report
       run: bash <(curl -s https://codecov.io/bash)
