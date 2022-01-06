@@ -1,7 +1,7 @@
 # metal-dns
 
 [![Actions](https://github.com/majst01/metal-dns/workflows/build/badge.svg)](https://github.com/majst01/metal-dns/actions)
-[![GoDoc](https://pkg.go.dev/github.com/majst01/metal-dns?status.svg)](https://pkg.go.dev/github.com/majst01/metal-dns)
+[![Go Reference](https://pkg.go.dev/badge/github.com/majst01/metal-dns.svg)](https://pkg.go.dev/github.com/majst01/metal-dns)
 [![Go Report Card](https://goreportcard.com/badge/github.com/majst01/metal-dns)](https://goreportcard.com/report/github.com/majst01/metal-dns)
 [![codecov](https://codecov.io/gh/majst01/metal-dns/branch/master/graph/badge.svg)](https://codecov.io/gh/majst01/metal-dns)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/majst01/metal-dns/blob/master/LICENSE)
