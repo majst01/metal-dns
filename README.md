@@ -88,10 +88,11 @@ import (
 )
 
 func main() {
+  ctx := context.Background()
   dialConfig := client.DialConfig{
     Token: os.Getenv("JWT_TOKEN"),
   }
-  c, err = client.NewClient(context.Background(), dialConfig)
+  c, err = client.NewClient(ctx, dialConfig)
   if err != nil {
     panic(err)
   }
