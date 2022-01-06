@@ -41,7 +41,7 @@ dockerimage:
 	DOCKER_BUILDKIT=1 docker build -t ghrc.io/majst01/metal-dns:${DOCKER_TAG} .
 
 .PHONY: dockerpush
-dockerimage:
+dockerpush:
 	DOCKER_BUILDKIT=1 docker push ghrc.io/majst01/metal-dns:${DOCKER_TAG} 
 
 .PHONY: pdns-up
