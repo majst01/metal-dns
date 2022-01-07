@@ -174,7 +174,7 @@ func (d *DomainService) Check(ctx context.Context, in *healthpb.HealthCheckReque
 	if err != nil {
 		return &healthpb.HealthCheckResponse{
 			Status: healthpb.HealthCheckResponse_NOT_SERVING,
-		}, nil
+		}, err
 	}
 	if s.Version != nil {
 		return &healthpb.HealthCheckResponse{
