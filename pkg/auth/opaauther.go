@@ -95,6 +95,10 @@ func (o *OpaAuther) OpaUnaryInterceptor(ctx context.Context, req interface{}, in
 }
 
 func (o *OpaAuther) authorize(ctx context.Context, methodName string, req interface{}) error {
+	// FIXME put this into a central config map
+	if methodName == "/grpc.health.v1.Health/Check" {
+		return nil
+	}
 	md, jwt, err := JWTFromContext(ctx)
 	if err != nil {
 		return status.Error(codes.Unauthenticated, err.Error())

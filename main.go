@@ -43,6 +43,7 @@ func initConfig() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
+	rootCmd.Flags().StringP("host", "", "localhost", "the host/ip to serve on")
 	rootCmd.Flags().IntP("port", "", 50051, "the port to serve on")
 
 	rootCmd.Flags().StringP("ca", "", "certs/ca.pem", "ca path")
@@ -71,6 +72,7 @@ func run() {
 	}()
 
 	config := server.DialConfig{
+		Host:   viper.GetString("host"),
 		Port:   viper.GetInt("port"),
 		Secret: viper.GetString("secret"),
 

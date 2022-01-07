@@ -7,7 +7,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/joeig/go-powerdns/v3 v3.0.1
+	github.com/joeig/go-powerdns/v3 v3.0.2
 	github.com/metal-stack/v v1.0.3
 	github.com/miekg/dns v1.1.45
 	github.com/open-policy-agent/opa v0.36.0

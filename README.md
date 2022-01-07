@@ -128,7 +128,3 @@ func main() {
 }
 
 ```
-
-## TODO
-
-- implement health endpoint: https://stackoverflow.com/questions/59352845/how-to-implement-go-grpc-go-health-check

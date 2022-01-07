@@ -23,6 +23,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -135,6 +136,9 @@ func (s *Server) Serve() error {
 	// After all your registrations, make sure all of the Prometheus metrics are initialized.
 	grpc_prometheus.Register(grpcServer)
 	reflection.Register(grpcServer)
+
+	// Register Health Service
+	grpc_health_v1.RegisterHealthServer(grpcServer, domainService)
 
 	return grpcServer.Serve(s.listener)
 }

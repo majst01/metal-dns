@@ -4,25 +4,32 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/joeig/go-powerdns/v3"
 	v1 "github.com/majst01/metal-dns/api/v1"
 	"github.com/majst01/metal-dns/pkg/auth"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
+	healthgrpc "google.golang.org/grpc/health/grpc_health_v1"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+
 	"google.golang.org/grpc/status"
 )
 
 type DomainService struct {
-	pdns *powerdns.Client
-	log  *zap.Logger
+	pdns  *powerdns.Client
+	log   *zap.Logger
+	mu    sync.RWMutex
+	vhost string
 }
 
 func NewDomainService(l *zap.Logger, baseURL string, vHost string, apikey string, httpClient *http.Client) *DomainService {
 	pdns := powerdns.NewClient(baseURL, vHost, map[string]string{"X-API-Key": apikey}, httpClient)
 	return &DomainService{
-		pdns: pdns,
-		log:  l,
+		pdns:  pdns,
+		log:   l,
+		vhost: vHost,
 	}
 }
 func (d *DomainService) List(ctx context.Context, req *v1.DomainsListRequest) (*v1.DomainsResponse, error) {
@@ -158,4 +165,27 @@ func toMap(in []string) map[string]bool {
 		out[in[i]] = true
 	}
 	return out
+}
+
+func (d *DomainService) Check(ctx context.Context, in *healthpb.HealthCheckRequest) (*healthpb.HealthCheckResponse, error) {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	s, err := d.pdns.Servers.Get(ctx, d.vhost)
+	if err != nil {
+		return &healthpb.HealthCheckResponse{
+			Status: healthpb.HealthCheckResponse_NOT_SERVING,
+		}, nil
+	}
+	if s.Version != nil {
+		return &healthpb.HealthCheckResponse{
+			Status: healthpb.HealthCheckResponse_SERVING,
+		}, nil
+	}
+	return nil, status.Error(codes.NotFound, "unknown service")
+}
+
+// Watch implements `service Health`.
+func (d *DomainService) Watch(in *healthpb.HealthCheckRequest, stream healthgrpc.Health_WatchServer) error {
+	// TODO not implemented
+	return nil
 }
