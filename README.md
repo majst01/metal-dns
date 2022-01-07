@@ -95,7 +95,9 @@ import (
 
 func main() {
   ctx := context.Background()
+  addr := "localhost:50051"
   dialConfig := client.DialConfig{
+    Address: &addr,
     Token: os.Getenv("JWT_TOKEN"),
   }
   c, err = client.NewClient(ctx, dialConfig)
