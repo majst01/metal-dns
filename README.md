@@ -76,7 +76,7 @@ docker run -d --rm \
 
 ```bash
 make certs
-docker run -d  --rm \
+docker run -d --rm \
   --name metal-dns \
   -p 50051:50051 \
   -v $PWD/certs:/certs ghcr.io/majst01/metal-dns:main \
