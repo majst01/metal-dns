@@ -9,7 +9,7 @@
 Acts as a authorization proxy in front of a powerdns resolver. Metal-DNS will restrict access to specific domains and subdomains.
 Access to certain api actions can also be restricted.
 
-A POC external-dns implementation is also available https://github.com/majst01/external-dns/tree/metal-dns-support .
+A POC external-dns implementation is also available <https://github.com/majst01/external-dns/tree/metal-dns-support> .
 
 Open Topics:
 
@@ -55,7 +55,10 @@ Example JWT Payload:
 1.) start Powerdns:
 
 ```bash
-docker run -d --name powerdns --rm -p 8081:80 -p 5533:53 powerdns/pdns-auth-46 \
+docker run -d --rm \
+  --name powerdns \
+  -p 8081:80 \
+  -p 5533:53 powerdns/pdns-auth-46 \
     --api=yes \
     --api-key=apipw \
     --webserver=yes \
@@ -73,7 +76,10 @@ docker run -d --name powerdns --rm -p 8081:80 -p 5533:53 powerdns/pdns-auth-46 \
 
 ```bash
 make certs
-docker run -d --name metal-dns --rm -p 50051:50051 -v $PWD/certs:/certs ghcr.io/majst01/metal-dns:main \
+docker run -d  --rm \
+  --name metal-dns \
+  -p 50051:50051 \
+  -v $PWD/certs:/certs ghcr.io/majst01/metal-dns:main \
     --pdns-api-password=apipw \
     --pdns-api-url=http://localhost:8081 \
     --pdns-api-vhost=localhost \
