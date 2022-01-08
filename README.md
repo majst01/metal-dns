@@ -79,7 +79,7 @@ make certs
 docker run -d --rm \
   --name metal-dns \
   -p 50051:50051 \
-  -v $PWD/certs:/certs ghcr.io/majst01/metal-dns:main \
+  -v $PWD/certs:/certs ghcr.io/majst01/metal-dns \
     --pdns-api-password=apipw \
     --pdns-api-url=http://localhost:8081 \
     --pdns-api-vhost=localhost \
