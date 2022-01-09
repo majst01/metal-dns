@@ -44,7 +44,8 @@ func initConfig() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.Flags().StringP("host", "", "localhost", "the host/ip to serve on")
-	rootCmd.Flags().IntP("port", "", 50051, "the port to serve on")
+	rootCmd.Flags().IntP("port", "", 50051, "the port to serve grpc on")
+	rootCmd.Flags().IntP("http-port", "", 8080, "the port to serve http on")
 
 	rootCmd.Flags().StringP("ca", "", "certs/ca.pem", "ca path")
 	rootCmd.Flags().StringP("cert", "", "certs/server.pem", "server certificate path")
@@ -72,9 +73,10 @@ func run() {
 	}()
 
 	config := server.DialConfig{
-		Host:   viper.GetString("host"),
-		Port:   viper.GetInt("port"),
-		Secret: viper.GetString("secret"),
+		Host:     viper.GetString("host"),
+		Port:     viper.GetInt("port"),
+		HTTPPort: viper.GetInt("http-port"),
+		Secret:   viper.GetString("secret"),
 
 		CA:      viper.GetString("ca"),
 		Cert:    viper.GetString("cert"),
@@ -90,6 +92,7 @@ func run() {
 	}
 
 	s.StartMetricsAndPprof()
+	s.StartLoginService()
 	if err := s.Serve(); err != nil {
 		logger.Fatal("failed to serve", zap.Error(err))
 	}

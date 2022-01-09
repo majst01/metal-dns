@@ -34,9 +34,10 @@ type Server struct {
 }
 
 type DialConfig struct {
-	Host   string
-	Port   int
-	Secret string
+	Host     string
+	Port     int
+	HTTPPort int
+	Secret   string
 
 	CA      string
 	Cert    string
