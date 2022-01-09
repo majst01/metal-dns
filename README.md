@@ -136,3 +136,34 @@ func main() {
 }
 
 ```
+
+## Onboarding
+
+In order to make this application useful, a self service onboarding and token generation must be implemented.
+
+The proposal would be the following:
+
+1.) The user will login with github authentication against a login endpoint ( [sample](https://github.com/dghubble/gologin/tree/master/examples/github) )
+
+2.) This endpoint will then offer:
+
+- a list of available domains or subdomains to acquire.
+- acquire domain or subdomain
+- transfer a already owned domain ( future feature )
+- create API Token for all or only a subset of acquired domains, with permissions and expiration
+- remove API Tokens
+- release acquired domains
+
+3.) The backend stores:
+
+- a list of available domains/subdomains
+- a mapping from username to acquired domains
+- a mapping from username to created tokens
+
+### Domains and Subdomains
+
+To ease the process of register dns entries for specific services, metal-dns adds the ability to delegate subdomains to individual users.
+This is actually not possible at prominent cloud providers, where a user must register a domain and can then act on the whole domain.
+
+So for example we could offer all subdomains below `metal-dns.org`. A user can the acquire `<username>.metal-dns.org` and then add whatever host or subdomain he wants below that.
+It should also be possible to acquire a random subdomain like `myshop.metal-dns.org`. Only the first subdomain below one of the available domains are able to be acquired.

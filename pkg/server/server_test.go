@@ -47,7 +47,6 @@ func TestDomainCRUD(t *testing.T) {
 				"/v1.DomainService/Create",
 				"/v1.DomainService/Update",
 				"/v1.DomainService/Delete",
-				"/v1.RecordService/Get",
 				"/v1.RecordService/List",
 				"/v1.RecordService/Create",
 				"/v1.RecordService/Update",
