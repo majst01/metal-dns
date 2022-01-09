@@ -4,6 +4,7 @@ package v1;
 
 option go_package = "./v1";
 
+import "google/protobuf/duration.proto";
 import "google/protobuf/wrappers.proto";
 
 service TokenService {
@@ -29,6 +30,7 @@ message TokenCreateRequest {
 	string issuer = 1;
 	repeated string domains = 2;
 	repeated string permissions = 3;
+	google.protobuf.Duration expires = 4;
 }
 
 message TokenResponse {

@@ -28,7 +28,11 @@ func NewTokenService(l *zap.Logger, secret string) *TokenService {
 	}
 }
 func (t *TokenService) Create(ctx context.Context, req *v1.TokenCreateRequest) (*v1.TokenResponse, error) {
-	token, err := newJWTToken("metal-dns", req.Issuer, req.Domains, req.Permissions, oneYear, t.secret)
+	exp := oneYear
+	if req.Expires != nil {
+		exp = req.Expires.AsDuration()
+	}
+	token, err := newJWTToken("metal-dns", req.Issuer, req.Domains, req.Permissions, exp, t.secret)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -52,6 +56,7 @@ func newJWTToken(subject, issuer string, domains, permissions []string, expires 
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(now.Add(expires)),
 			IssuedAt:  jwt.NewNumericDate(now),
+			NotBefore: jwt.NewNumericDate(now),
 
 			// ID is for your traceability, doesn't have to be UUID:
 			ID: uuid.New().String(),

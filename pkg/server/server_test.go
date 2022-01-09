@@ -14,6 +14,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 func TestDomainCRUD(t *testing.T) {
@@ -52,6 +53,7 @@ func TestDomainCRUD(t *testing.T) {
 				"/v1.RecordService/Update",
 				"/v1.RecordService/Delete",
 			},
+			Expires: durationpb.New(1 * time.Hour),
 		},
 	)
 	require.NoError(t, err)

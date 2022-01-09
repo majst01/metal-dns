@@ -10,6 +10,7 @@ jwt := io.jwt.encode_sign(
 		"name": "John Doe",
 		"iat": time.now_ns() / 1000000000,
 		"nbf": (time.now_ns() / 1000000000) - 100,
+		"exp": (time.now_ns() / 1000000000) + 100,
 		"domains": [
 			"a.example.com",
 			"b.example.com",
@@ -44,6 +45,7 @@ jwt_with_wrong_secret := io.jwt.encode_sign(
 		"name": "John Doe",
 		"iat": time.now_ns() / 1000000000,
 		"nbf": (time.now_ns() / 1000000000) - 100,
+		"exp": (time.now_ns() / 1000000000) + 100,
 		"domains": [
 			"a.example.com",
 			"b.example.com",

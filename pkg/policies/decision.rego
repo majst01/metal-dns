@@ -3,11 +3,13 @@ package api.v1.metalstack.io.authz
 default decision = {"allow": false, "isAdmin": false}
 
 admin(e) {
+	is_token_valid
 	ae := sprintf("%s.admin", [e])
 	permissions[ae]
 }
 
 user(e) {
+	is_token_valid
 	permissions[e]
 }
 
