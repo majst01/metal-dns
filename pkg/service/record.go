@@ -147,11 +147,10 @@ func domainFromFQDN(fqdn string) (string, error) {
 	if !ok {
 		return "", fmt.Errorf("%s is not a domain", fqdn)
 	}
-	fqdnparts := strings.SplitAfterN(fqdn, ".", 2)
-	if len(fqdnparts) < 2 {
+	_, domain, found := strings.Cut(fqdn, ".")
+	if !found {
 		return "", fmt.Errorf("fqdn must contain at least one dot")
 	}
-	domain := fqdnparts[1]
 	return domain, nil
 }
 

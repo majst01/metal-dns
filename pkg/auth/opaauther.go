@@ -75,7 +75,7 @@ func NewOpaAuther(log *zap.Logger, secret string) (*OpaAuther, error) {
 // OpaStreamInterceptor is OpaAuther StreamServerInterceptor for the
 // server. Only one stream interceptor can be installed.
 // If you want to add extra functionality you might decorate this function.
-func (o *OpaAuther) OpaStreamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+func (o *OpaAuther) OpaStreamInterceptor(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 	if err := o.authorize(stream.Context(), info.FullMethod, nil); err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func (o *OpaAuther) OpaStreamInterceptor(srv interface{}, stream grpc.ServerStre
 // OpaUnaryInterceptor is OpaAuther UnaryServerInterceptor for the
 // server. Only one unary interceptor can be installed.
 // If you want to add extra functionality you might decorate this function.
-func (o *OpaAuther) OpaUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func (o *OpaAuther) OpaUnaryInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 	if err := o.authorize(ctx, info.FullMethod, req); err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (o *OpaAuther) OpaUnaryInterceptor(ctx context.Context, req interface{}, in
 	return handler(ctx, req)
 }
 
-func (o *OpaAuther) authorize(ctx context.Context, methodName string, req interface{}) error {
+func (o *OpaAuther) authorize(ctx context.Context, methodName string, req any) error {
 	// FIXME put this into a central config map
 	if methodName == "/grpc.health.v1.Health/Check" {
 		return nil
@@ -116,7 +116,7 @@ func (o *OpaAuther) authorize(ctx context.Context, methodName string, req interf
 
 }
 
-func (o *OpaAuther) decide(ctx context.Context, input map[string]interface{}, method string) (bool, error) {
+func (o *OpaAuther) decide(ctx context.Context, input map[string]any, method string) (bool, error) {
 	o.log.Infow("rego evaluation", "input", input)
 	results, err := o.qDecision.Eval(ctx, rego.EvalInput(input))
 	if err != nil {
@@ -126,7 +126,7 @@ func (o *OpaAuther) decide(ctx context.Context, input map[string]interface{}, me
 		return false, fmt.Errorf("error evaluating rego result set: results have no length")
 	}
 
-	decision, ok := results[0].Bindings["x"].(map[string]interface{})
+	decision, ok := results[0].Bindings["x"].(map[string]any)
 	if !ok {
 		return false, fmt.Errorf("error evaluating rego result set: unexpected response type")
 	}
@@ -149,8 +149,8 @@ func (o *OpaAuther) decide(ctx context.Context, input map[string]interface{}, me
 	return allow, nil
 }
 
-func newOpaRequest(method string, req interface{}, token, secret string) map[string]interface{} {
-	return map[string]interface{}{
+func newOpaRequest(method string, req any, token, secret string) map[string]any {
+	return map[string]any{
 		"method":  method,
 		"request": req,
 		"token":   token,
@@ -167,10 +167,9 @@ func JWTFromContext(ctx context.Context) (metadata.MD, string, error) {
 	if !exists {
 		return nil, "", fmt.Errorf("no token found")
 	}
-	parts := strings.Split(token[0], " ")
-	if len(parts) < 2 {
+	_, jwt, found := strings.Cut(token[0], " ")
+	if !found {
 		return nil, "", fmt.Errorf("token format error")
 	}
-	jwt := parts[1]
 	return md, jwt, nil
 }
