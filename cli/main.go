@@ -42,7 +42,7 @@ func run(c client.Client, log *zap.Logger) {
 	ctx, cancel := context.WithTimeout(context.Background(), grpcRequestTimeout)
 	defer cancel()
 
-	token, err := c.Token().Create(ctx, &v1.TokenCreateRequest{
+	token, err := c.Token().Create(ctx, &v1.TokenServiceCreateRequest{
 		Issuer:  "John Doe",
 		Domains: []string{"example.com."},
 		Permissions: []string{
@@ -67,20 +67,20 @@ func run(c client.Client, log *zap.Logger) {
 		log.Fatal(err.Error())
 	}
 
-	ds, err := c.Domain().List(ctx, &v1.DomainsListRequest{Domains: []string{"example.com."}})
+	ds, err := c.Domain().List(ctx, &v1.DomainServiceListRequest{Domains: []string{"example.com."}})
 	if err != nil {
 		log.Fatal("could not list domain", zap.Error(err))
 	}
 	log.Sugar().Infow("list domains", "domains", ds.Domains)
 
-	rs, err := c.Record().List(ctx, &v1.RecordsListRequest{Domain: "example.com."})
+	rs, err := c.Record().List(ctx, &v1.RecordServiceListRequest{Domain: "example.com."})
 	if err != nil {
 		log.Fatal("could not list records", zap.Error(err))
 	}
 
 	log.Sugar().Infow("list records", "records", rs.Records)
 	// create
-	dcr := &v1.DomainCreateRequest{
+	dcr := &v1.DomainServiceCreateRequest{
 		Name:        "a.example.com.",
 		Nameservers: []string{"ns1.example.com."},
 	}
@@ -92,7 +92,7 @@ func run(c client.Client, log *zap.Logger) {
 	}
 
 	// create record
-	rcr := &v1.RecordCreateRequest{
+	rcr := &v1.RecordServiceCreateRequest{
 		Name: "www.a.example.com.",
 		Type: v1.RecordType_A,
 		Ttl:  3600,
@@ -105,7 +105,7 @@ func run(c client.Client, log *zap.Logger) {
 		log.Sugar().Infow("created record", "record", r.Record)
 	}
 
-	rlr := &v1.RecordsListRequest{Domain: "example.com.", Type: v1.RecordType_A}
+	rlr := &v1.RecordServiceListRequest{Domain: "example.com.", Type: v1.RecordType_A}
 	records, err := c.Record().List(ctx, rlr)
 	if err != nil {
 		log.Error("could not list records", zap.Error(err))

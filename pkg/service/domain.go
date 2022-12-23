@@ -32,7 +32,7 @@ func NewDomainService(l *zap.Logger, baseURL string, vHost string, apikey string
 		vhost: vHost,
 	}
 }
-func (d *DomainService) List(ctx context.Context, req *v1.DomainsListRequest) (*v1.DomainsResponse, error) {
+func (d *DomainService) List(ctx context.Context, req *v1.DomainServiceListRequest) (*v1.DomainServiceListResponse, error) {
 	_, jwt, err := auth.JWTFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -62,19 +62,19 @@ func (d *DomainService) List(ctx context.Context, req *v1.DomainsListRequest) (*
 		domain := toV1Domain(&z)
 		domains = append(domains, domain)
 	}
-	return &v1.DomainsResponse{Domains: domains}, nil
+	return &v1.DomainServiceListResponse{Domains: domains}, nil
 }
 
-func (d *DomainService) Get(ctx context.Context, req *v1.DomainGetRequest) (*v1.DomainResponse, error) {
+func (d *DomainService) Get(ctx context.Context, req *v1.DomainServiceGetRequest) (*v1.DomainServiceGetResponse, error) {
 	zone, err := d.pdns.Zones.Get(ctx, req.Name)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 	domain := toV1Domain(zone)
-	return &v1.DomainResponse{Domain: domain}, nil
+	return &v1.DomainServiceGetResponse{Domain: domain}, nil
 }
 
-func (d *DomainService) Create(ctx context.Context, req *v1.DomainCreateRequest) (*v1.DomainResponse, error) {
+func (d *DomainService) Create(ctx context.Context, req *v1.DomainServiceCreateRequest) (*v1.DomainServiceCreateResponse, error) {
 	// TODO add parameters to DomainCreateRequest
 	zone := &powerdns.Zone{
 		Name:        &req.Name,
@@ -95,10 +95,10 @@ func (d *DomainService) Create(ctx context.Context, req *v1.DomainCreateRequest)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	domain := toV1Domain(zone)
-	return &v1.DomainResponse{Domain: domain}, nil
+	return &v1.DomainServiceCreateResponse{Domain: domain}, nil
 }
 
-func (d *DomainService) Update(ctx context.Context, req *v1.DomainUpdateRequest) (*v1.DomainResponse, error) {
+func (d *DomainService) Update(ctx context.Context, req *v1.DomainServiceUpdateRequest) (*v1.DomainServiceUpdateResponse, error) {
 	existingZone, err := d.pdns.Zones.Get(ctx, req.Name)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
@@ -115,10 +115,10 @@ func (d *DomainService) Update(ctx context.Context, req *v1.DomainUpdateRequest)
 	}
 
 	domain := toV1Domain(existingZone)
-	return &v1.DomainResponse{Domain: domain}, nil
+	return &v1.DomainServiceUpdateResponse{Domain: domain}, nil
 }
 
-func (d *DomainService) Delete(ctx context.Context, req *v1.DomainDeleteRequest) (*v1.DomainResponse, error) {
+func (d *DomainService) Delete(ctx context.Context, req *v1.DomainServiceDeleteRequest) (*v1.DomainServiceDeleteResponse, error) {
 	err := d.pdns.Zones.Delete(ctx, req.Name)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -126,7 +126,7 @@ func (d *DomainService) Delete(ctx context.Context, req *v1.DomainDeleteRequest)
 	domain := &v1.Domain{
 		Name: req.Name,
 	}
-	return &v1.DomainResponse{Domain: domain}, nil
+	return &v1.DomainServiceDeleteResponse{Domain: domain}, nil
 }
 
 func toV1Domain(zone *powerdns.Zone) *v1.Domain {

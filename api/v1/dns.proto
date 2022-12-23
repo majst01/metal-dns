@@ -8,32 +8,32 @@ import "google/protobuf/duration.proto";
 import "google/protobuf/wrappers.proto";
 
 service TokenService {
-	rpc Create(TokenCreateRequest) returns (TokenResponse);
+	rpc Create(TokenServiceCreateRequest) returns (TokenServiceCreateResponse);
 }
 
 service DomainService {
-	rpc List(DomainsListRequest) returns (DomainsResponse);
-	rpc Get(DomainGetRequest) returns (DomainResponse);
-	rpc Create(DomainCreateRequest) returns (DomainResponse);
-	rpc Update(DomainUpdateRequest) returns (DomainResponse);
-	rpc Delete(DomainDeleteRequest) returns (DomainResponse);
+	rpc List(DomainServiceListRequest) returns (DomainServiceListResponse);
+	rpc Get(DomainServiceGetRequest) returns (DomainServiceGetResponse);
+	rpc Create(DomainServiceCreateRequest) returns (DomainServiceCreateResponse);
+	rpc Update(DomainServiceUpdateRequest) returns (DomainServiceUpdateResponse);
+	rpc Delete(DomainServiceDeleteRequest) returns (DomainServiceDeleteResponse);
 }
 service RecordService {
-    rpc List(RecordsListRequest) returns (RecordsResponse);
-	rpc Delete(RecordDeleteRequest) returns (RecordResponse);
-	rpc Update(RecordUpdateRequest) returns (RecordResponse);
-	rpc Create(RecordCreateRequest) returns (RecordResponse);
+    rpc List(RecordServiceListRequest) returns (RecordServiceListResponse);
+	rpc Delete(RecordServiceDeleteRequest) returns (RecordServiceDeleteResponse);
+	rpc Update(RecordServiceUpdateRequest) returns (RecordServiceUpdateResponse);
+	rpc Create(RecordServiceCreateRequest) returns (RecordServiceCreateResponse);
 }
 
 // Tokens
-message TokenCreateRequest {
+message TokenServiceCreateRequest {
 	string issuer = 1;
 	repeated string domains = 2;
 	repeated string permissions = 3;
 	google.protobuf.Duration expires = 4;
 }
 
-message TokenResponse {
+message TokenServiceCreateResponse {
 	string token = 1;
 }
 
@@ -48,32 +48,38 @@ message Domain {
 	repeated string nameservers = 6;
 }
 
-message DomainsListRequest {
+message DomainServiceListRequest {
 	repeated string domains = 1;
 }
-message DomainGetRequest {
+message DomainServiceGetRequest {
     string name = 1;
 }
-message DomainCreateRequest {
-    string name = 1;
-    repeated string nameservers = 2;
-	google.protobuf.StringValue url = 5;
-}
-message DomainUpdateRequest {
+message DomainServiceCreateRequest {
     string name = 1;
     repeated string nameservers = 2;
 	google.protobuf.StringValue url = 5;
 }
-message DomainDeleteRequest {
+message DomainServiceUpdateRequest {
+    string name = 1;
+    repeated string nameservers = 2;
+	google.protobuf.StringValue url = 5;
+}
+message DomainServiceDeleteRequest {
     string name = 1;
 }
-message DomainsResponse {
+message DomainServiceListResponse {
     repeated Domain domains = 1;
 }
-message DomainResponse {
+message DomainServiceGetResponse {
     Domain domain = 1;
 }
-
+message DomainServiceUpdateResponse {
+    Domain domain = 1;
+}message DomainServiceCreateResponse {
+    Domain domain = 1;
+}message DomainServiceDeleteResponse {
+    Domain domain = 1;
+}
 // Records
 
 message Record {
@@ -145,12 +151,12 @@ enum RecordType {
 	ZZZ = 52;
 }
 
-message RecordsListRequest {
+message RecordServiceListRequest {
 	string domain = 1;
     RecordType type = 2;
     google.protobuf.StringValue name = 3;
 }
-message RecordCreateRequest {
+message RecordServiceCreateRequest {
     RecordType type = 1;
 	string name = 2;
 	string data = 3;
@@ -161,7 +167,7 @@ message RecordCreateRequest {
 	int32 flags = 8;
     string tag = 9;
 }
-message RecordUpdateRequest {
+message RecordServiceUpdateRequest {
     string uuid = 1;
     RecordType type = 2;
 	string name = 3;
@@ -173,15 +179,24 @@ message RecordUpdateRequest {
 	int32 flags = 9;
 	string tag = 10;
 }
-message RecordDeleteRequest {
+message RecordServiceDeleteRequest {
 	RecordType type = 1;
 	string name = 2;
 	string data = 3;
 }
 
-message RecordsResponse {
+message RecordServiceListResponse {
     repeated Record records = 1;
 }
-message RecordResponse {
+message RecordServiceGetResponse {
+    Record record = 1;
+}
+message RecordServiceDeleteResponse {
+    Record record = 1;
+}
+message RecordServiceUpdateResponse {
+    Record record = 1;
+}
+message RecordServiceCreateResponse {
     Record record = 1;
 }

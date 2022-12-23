@@ -36,7 +36,7 @@ const (
 	byNameAndType
 )
 
-func (r *RecordService) List(ctx context.Context, req *v1.RecordsListRequest) (*v1.RecordsResponse, error) {
+func (r *RecordService) List(ctx context.Context, req *v1.RecordServiceListRequest) (*v1.RecordServiceListResponse, error) {
 	zone, err := r.pdns.Zones.Get(ctx, req.Domain)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -79,10 +79,10 @@ func (r *RecordService) List(ctx context.Context, req *v1.RecordsListRequest) (*
 			}
 		}
 	}
-	return &v1.RecordsResponse{Records: records}, nil
+	return &v1.RecordServiceListResponse{Records: records}, nil
 }
 
-func (r *RecordService) Create(ctx context.Context, req *v1.RecordCreateRequest) (*v1.RecordResponse, error) {
+func (r *RecordService) Create(ctx context.Context, req *v1.RecordServiceCreateRequest) (*v1.RecordServiceCreateResponse, error) {
 	domain, err := domainFromFQDN(req.Name)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -99,10 +99,10 @@ func (r *RecordService) Create(ctx context.Context, req *v1.RecordCreateRequest)
 		Type: req.Type,
 		Ttl:  req.Ttl,
 	}
-	return &v1.RecordResponse{Record: record}, nil
+	return &v1.RecordServiceCreateResponse{Record: record}, nil
 }
 
-func (r *RecordService) Update(ctx context.Context, req *v1.RecordUpdateRequest) (*v1.RecordResponse, error) {
+func (r *RecordService) Update(ctx context.Context, req *v1.RecordServiceUpdateRequest) (*v1.RecordServiceUpdateResponse, error) {
 	domain, err := domainFromFQDN(req.Name)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -118,10 +118,10 @@ func (r *RecordService) Update(ctx context.Context, req *v1.RecordUpdateRequest)
 		Type: req.Type,
 		Ttl:  req.Ttl,
 	}
-	return &v1.RecordResponse{Record: record}, nil
+	return &v1.RecordServiceUpdateResponse{Record: record}, nil
 }
 
-func (r *RecordService) Delete(ctx context.Context, req *v1.RecordDeleteRequest) (*v1.RecordResponse, error) {
+func (r *RecordService) Delete(ctx context.Context, req *v1.RecordServiceDeleteRequest) (*v1.RecordServiceDeleteResponse, error) {
 	domain, err := domainFromFQDN(req.Name)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -137,7 +137,7 @@ func (r *RecordService) Delete(ctx context.Context, req *v1.RecordDeleteRequest)
 		Data: req.Data,
 		Type: req.Type,
 	}
-	return &v1.RecordResponse{Record: record}, nil
+	return &v1.RecordServiceDeleteResponse{Record: record}, nil
 }
 
 // Helper

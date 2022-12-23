@@ -27,7 +27,7 @@ func NewTokenService(l *zap.Logger, secret string) *TokenService {
 		log:    l,
 	}
 }
-func (t *TokenService) Create(ctx context.Context, req *v1.TokenCreateRequest) (*v1.TokenResponse, error) {
+func (t *TokenService) Create(ctx context.Context, req *v1.TokenServiceCreateRequest) (*v1.TokenServiceCreateResponse, error) {
 	exp := oneYear
 	if req.Expires != nil {
 		exp = req.Expires.AsDuration()
@@ -36,7 +36,7 @@ func (t *TokenService) Create(ctx context.Context, req *v1.TokenCreateRequest) (
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	return &v1.TokenResponse{Token: token}, nil
+	return &v1.TokenServiceCreateResponse{Token: token}, nil
 }
 
 type dnsClaims struct {

@@ -1,4 +1,4 @@
-FROM golang:1.18-alpine as builder
+FROM golang:1.19-alpine as builder
 
 RUN apk add \
     gcc \
@@ -9,6 +9,6 @@ WORKDIR /work
 COPY . .
 RUN make certs server
 
-FROM alpine:3.16
+FROM alpine:3.17
 COPY --from=builder /work/bin/server /
 ENTRYPOINT [ "/server" ]

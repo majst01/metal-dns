@@ -37,7 +37,7 @@ func TestDomainCRUD(t *testing.T) {
 	require.NotNil(t, c)
 
 	token, err := c.Token().Create(ctx,
-		&v1.TokenCreateRequest{
+		&v1.TokenServiceCreateRequest{
 			Issuer:  "Tester",
 			Domains: []string{"example.com."},
 			Permissions: []string{
@@ -68,30 +68,30 @@ func TestDomainCRUD(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, c)
 
-	ds, err := c.Domain().List(ctx, &v1.DomainsListRequest{Domains: []string{"example.com."}})
+	ds, err := c.Domain().List(ctx, &v1.DomainServiceListRequest{Domains: []string{"example.com."}})
 	require.NoError(t, err)
 	require.Empty(t, ds.Domains)
 
-	d1, err := c.Domain().Get(ctx, &v1.DomainGetRequest{Name: "example.com."})
+	d1, err := c.Domain().Get(ctx, &v1.DomainServiceGetRequest{Name: "example.com."})
 	require.ErrorIs(t, err, status.Error(codes.NotFound, "Not Found"))
 	require.Nil(t, d1)
 
-	d1, err = c.Domain().Create(ctx, &v1.DomainCreateRequest{Name: "example.com.", Nameservers: []string{"ns1.example.com."}})
+	d2, err := c.Domain().Create(ctx, &v1.DomainServiceCreateRequest{Name: "example.com.", Nameservers: []string{"ns1.example.com."}})
 	require.NoError(t, err)
-	require.NotNil(t, d1)
+	require.NotNil(t, d2)
 
-	require.Equal(t, "example.com.", d1.Domain.Name)
-	require.NotNil(t, d1.Domain.Id)
-	require.Equal(t, "example.com.", d1.Domain.Id)
-	require.NotNil(t, d1.Domain.Url)
+	require.Equal(t, "example.com.", d2.Domain.Name)
+	require.NotNil(t, d2.Domain.Id)
+	require.Equal(t, "example.com.", d2.Domain.Id)
+	require.NotNil(t, d2.Domain.Url)
 
-	d1, err = c.Domain().Delete(ctx, &v1.DomainDeleteRequest{Name: "example.com."})
+	d3, err := c.Domain().Delete(ctx, &v1.DomainServiceDeleteRequest{Name: "example.com."})
 	require.NoError(t, err)
-	require.NotNil(t, d1)
+	require.NotNil(t, d3)
 
-	d1, err = c.Domain().Get(ctx, &v1.DomainGetRequest{Name: "example.com."})
+	d4, err := c.Domain().Get(ctx, &v1.DomainServiceGetRequest{Name: "example.com."})
 	require.ErrorIs(t, err, status.Error(codes.NotFound, "Not Found"))
-	require.Nil(t, d1)
+	require.Nil(t, d4)
 }
 
 func TestDomainService_List_DomainsFiltered(t *testing.T) {
@@ -114,7 +114,7 @@ func TestDomainService_List_DomainsFiltered(t *testing.T) {
 	require.NotNil(t, c)
 
 	token, err := c.Token().Create(ctx,
-		&v1.TokenCreateRequest{
+		&v1.TokenServiceCreateRequest{
 			Issuer:  "Tester",
 			Domains: []string{"example.com.", "foo.bar."},
 			Permissions: []string{
@@ -135,31 +135,31 @@ func TestDomainService_List_DomainsFiltered(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, c)
 
-	ds, err := c.Domain().List(ctx, &v1.DomainsListRequest{Domains: []string{"example.com."}})
+	ds, err := c.Domain().List(ctx, &v1.DomainServiceListRequest{Domains: []string{"example.com."}})
 	require.NoError(t, err)
 	require.Empty(t, ds.Domains)
 
-	d1, err := c.Domain().Create(ctx, &v1.DomainCreateRequest{Name: "example.com.", Nameservers: []string{"ns1.example.com."}})
+	d1, err := c.Domain().Create(ctx, &v1.DomainServiceCreateRequest{Name: "example.com.", Nameservers: []string{"ns1.example.com."}})
 	require.NoError(t, err)
 	require.NotNil(t, d1)
 
-	d2, err := c.Domain().Create(ctx, &v1.DomainCreateRequest{Name: "foo.bar.", Nameservers: []string{"ns1.foo.bar."}})
+	d2, err := c.Domain().Create(ctx, &v1.DomainServiceCreateRequest{Name: "foo.bar.", Nameservers: []string{"ns1.foo.bar."}})
 	require.NoError(t, err)
 	require.NotNil(t, d2)
 
 	// List only one domain
-	ds, err = c.Domain().List(ctx, &v1.DomainsListRequest{Domains: []string{"example.com."}})
+	ds2, err := c.Domain().List(ctx, &v1.DomainServiceListRequest{Domains: []string{"example.com."}})
 	require.NoError(t, err)
-	require.NotEmpty(t, ds.Domains)
-	require.Equal(t, []*v1.Domain{{Id: "example.com.", Name: "example.com.", Url: "/api/v1/servers/localhost/zones/example.com."}}, ds.Domains)
+	require.NotEmpty(t, ds2.Domains)
+	require.Equal(t, []*v1.Domain{{Id: "example.com.", Name: "example.com.", Url: "/api/v1/servers/localhost/zones/example.com."}}, ds2.Domains)
 
 	// List wrong domain
-	ds, err = c.Domain().List(ctx, &v1.DomainsListRequest{Domains: []string{"sample.com."}})
+	ds, err = c.Domain().List(ctx, &v1.DomainServiceListRequest{Domains: []string{"sample.com."}})
 	require.ErrorIs(t, err, status.Error(codes.Unauthenticated, "domain:sample.com. is not allowed to list, only [example.com. foo.bar.]"))
 	require.Nil(t, ds)
 
 	// List without domain specified should returned allowed domains
-	ds, err = c.Domain().List(ctx, &v1.DomainsListRequest{})
+	ds, err = c.Domain().List(ctx, &v1.DomainServiceListRequest{})
 	require.NoError(t, err)
 	require.NotEmpty(t, ds.Domains)
 	require.Equal(t, []*v1.Domain{
@@ -190,7 +190,7 @@ func TestRecordCRUD(t *testing.T) {
 	require.NotNil(t, c)
 
 	token, err := c.Token().Create(ctx,
-		&v1.TokenCreateRequest{
+		&v1.TokenServiceCreateRequest{
 			Issuer:  "Tester",
 			Domains: []string{"a.example.com."},
 			Permissions: []string{
@@ -219,11 +219,11 @@ func TestRecordCRUD(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, c)
 
-	d1, err := c.Domain().Create(ctx, &v1.DomainCreateRequest{Name: "a.example.com.", Nameservers: []string{"ns1.example.com."}})
+	d1, err := c.Domain().Create(ctx, &v1.DomainServiceCreateRequest{Name: "a.example.com.", Nameservers: []string{"ns1.example.com."}})
 	require.NoError(t, err)
 	require.NotNil(t, d1)
 
-	r1, err := c.Record().Create(ctx, &v1.RecordCreateRequest{Type: v1.RecordType_A, Name: "www.a.example.com.", Data: "1.2.3.4", Ttl: uint32(600)})
+	r1, err := c.Record().Create(ctx, &v1.RecordServiceCreateRequest{Type: v1.RecordType_A, Name: "www.a.example.com.", Data: "1.2.3.4", Ttl: uint32(600)})
 	require.NoError(t, err)
 	require.NotNil(t, r1)
 	require.Equal(t, "www.a.example.com.", r1.Record.Name)
@@ -234,22 +234,22 @@ func TestRecordCRUD(t *testing.T) {
 	require.NotNil(t, addrs)
 	require.Contains(t, addrs, "1.2.3.4")
 
-	r1, err = c.Record().Update(ctx, &v1.RecordUpdateRequest{Type: v1.RecordType_A, Name: "www.a.example.com.", Data: "2.3.4.5"})
+	r2, err := c.Record().Update(ctx, &v1.RecordServiceUpdateRequest{Type: v1.RecordType_A, Name: "www.a.example.com.", Data: "2.3.4.5"})
 	require.NoError(t, err)
-	require.NotNil(t, r1)
+	require.NotNil(t, r2)
 
 	addrs, err = pdns.Resolver.LookupHost(ctx, "www.a.example.com")
 	require.NoError(t, err)
 	require.NotNil(t, addrs)
 	require.Contains(t, addrs, "2.3.4.5")
 
-	d1, err = c.Domain().Delete(ctx, &v1.DomainDeleteRequest{Name: "a.example.com."})
+	d2, err := c.Domain().Delete(ctx, &v1.DomainServiceDeleteRequest{Name: "a.example.com."})
 	require.NoError(t, err)
-	require.NotNil(t, d1)
+	require.NotNil(t, d2)
 
-	d1, err = c.Domain().Get(ctx, &v1.DomainGetRequest{Name: "a.example.com."})
+	d3, err := c.Domain().Get(ctx, &v1.DomainServiceGetRequest{Name: "a.example.com."})
 	require.ErrorIs(t, err, status.Error(codes.NotFound, "Not Found"))
-	require.Nil(t, d1)
+	require.Nil(t, d3)
 }
 
 // Helper
