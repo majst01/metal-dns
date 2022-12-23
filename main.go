@@ -43,12 +43,7 @@ func initConfig() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.Flags().StringP("host", "", "localhost", "the host/ip to serve on")
-	rootCmd.Flags().IntP("port", "", 50051, "the port to serve on")
-
-	rootCmd.Flags().StringP("ca", "", "certs/ca.pem", "ca path")
-	rootCmd.Flags().StringP("cert", "", "certs/server.pem", "server certificate path")
-	rootCmd.Flags().StringP("certkey", "", "certs/server-key.pem", "server key path")
+	rootCmd.Flags().StringP("http-endpoint", "", "localhost:8080", "the host/ip to serve on")
 
 	rootCmd.Flags().StringP("secret", "", "secret", "jwt signing secret")
 
@@ -72,24 +67,17 @@ func run() {
 	}()
 
 	config := server.DialConfig{
-		Host:   viper.GetString("host"),
-		Port:   viper.GetInt("port"),
-		Secret: viper.GetString("secret"),
-
-		CA:      viper.GetString("ca"),
-		Cert:    viper.GetString("cert"),
-		CertKey: viper.GetString("certkey"),
+		HttpServerEndpoint: viper.GetString("http-endpoint"),
+		Secret:             viper.GetString("secret"),
 
 		PdnsApiUrl:      viper.GetString("pdns-api-url"),
 		PdnsApiPassword: viper.GetString("pdns-api-password"),
 		PdnsApiVHost:    viper.GetString("pdns-api-vhost"),
 	}
-	s, err := server.NewServer(logger, config)
+	s, err := server.New(logger, config)
 	if err != nil {
 		logger.Fatal("failed to create server %v", zap.Error(err))
 	}
-
-	s.StartMetricsAndPprof()
 	if err := s.Serve(); err != nil {
 		logger.Fatal("failed to serve", zap.Error(err))
 	}

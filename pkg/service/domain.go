@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"sync"
 
+	connect "github.com/bufbuild/connect-go"
 	"github.com/joeig/go-powerdns/v3"
 	v1 "github.com/majst01/metal-dns/api/v1"
 	"github.com/majst01/metal-dns/pkg/auth"
@@ -32,7 +33,9 @@ func NewDomainService(l *zap.Logger, baseURL string, vHost string, apikey string
 		vhost: vHost,
 	}
 }
-func (d *DomainService) List(ctx context.Context, req *v1.DomainServiceListRequest) (*v1.DomainServiceListResponse, error) {
+
+func (d *DomainService) List(ctx context.Context, rq *connect.Request[v1.DomainServiceListRequest]) (*connect.Response[v1.DomainServiceListResponse], error) {
+	req := rq.Msg
 	_, jwt, err := auth.JWTFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -62,19 +65,21 @@ func (d *DomainService) List(ctx context.Context, req *v1.DomainServiceListReque
 		domain := toV1Domain(&z)
 		domains = append(domains, domain)
 	}
-	return &v1.DomainServiceListResponse{Domains: domains}, nil
+	return connect.NewResponse(&v1.DomainServiceListResponse{Domains: domains}), nil
 }
 
-func (d *DomainService) Get(ctx context.Context, req *v1.DomainServiceGetRequest) (*v1.DomainServiceGetResponse, error) {
+func (d *DomainService) Get(ctx context.Context, rq *connect.Request[v1.DomainServiceGetRequest]) (*connect.Response[v1.DomainServiceGetResponse], error) {
+	req := rq.Msg
 	zone, err := d.pdns.Zones.Get(ctx, req.Name)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 	domain := toV1Domain(zone)
-	return &v1.DomainServiceGetResponse{Domain: domain}, nil
+	return connect.NewResponse(&v1.DomainServiceGetResponse{Domain: domain}), nil
 }
 
-func (d *DomainService) Create(ctx context.Context, req *v1.DomainServiceCreateRequest) (*v1.DomainServiceCreateResponse, error) {
+func (d *DomainService) Create(ctx context.Context, rq *connect.Request[v1.DomainServiceCreateRequest]) (*connect.Response[v1.DomainServiceCreateResponse], error) {
+	req := rq.Msg
 	// TODO add parameters to DomainCreateRequest
 	zone := &powerdns.Zone{
 		Name:        &req.Name,
@@ -88,17 +93,18 @@ func (d *DomainService) Create(ctx context.Context, req *v1.DomainServiceCreateR
 		Nameservers: req.Nameservers,
 	}
 	if req.Url != nil {
-		zone.URL = &req.Url.Value
+		zone.URL = req.Url
 	}
 	zone, err := d.pdns.Zones.Add(ctx, zone)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	domain := toV1Domain(zone)
-	return &v1.DomainServiceCreateResponse{Domain: domain}, nil
+	return connect.NewResponse(&v1.DomainServiceCreateResponse{Domain: domain}), nil
 }
 
-func (d *DomainService) Update(ctx context.Context, req *v1.DomainServiceUpdateRequest) (*v1.DomainServiceUpdateResponse, error) {
+func (d *DomainService) Update(ctx context.Context, rq *connect.Request[v1.DomainServiceUpdateRequest]) (*connect.Response[v1.DomainServiceUpdateResponse], error) {
+	req := rq.Msg
 	existingZone, err := d.pdns.Zones.Get(ctx, req.Name)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
@@ -106,7 +112,7 @@ func (d *DomainService) Update(ctx context.Context, req *v1.DomainServiceUpdateR
 
 	existingZone.Nameservers = req.Nameservers
 	if req.Url != nil {
-		existingZone.URL = &req.Url.Value
+		existingZone.URL = req.Url
 	}
 
 	err = d.pdns.Zones.Change(ctx, *existingZone.Name, existingZone)
@@ -115,10 +121,11 @@ func (d *DomainService) Update(ctx context.Context, req *v1.DomainServiceUpdateR
 	}
 
 	domain := toV1Domain(existingZone)
-	return &v1.DomainServiceUpdateResponse{Domain: domain}, nil
+	return connect.NewResponse(&v1.DomainServiceUpdateResponse{Domain: domain}), nil
 }
 
-func (d *DomainService) Delete(ctx context.Context, req *v1.DomainServiceDeleteRequest) (*v1.DomainServiceDeleteResponse, error) {
+func (d *DomainService) Delete(ctx context.Context, rq *connect.Request[v1.DomainServiceDeleteRequest]) (*connect.Response[v1.DomainServiceDeleteResponse], error) {
+	req := rq.Msg
 	err := d.pdns.Zones.Delete(ctx, req.Name)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -126,7 +133,7 @@ func (d *DomainService) Delete(ctx context.Context, req *v1.DomainServiceDeleteR
 	domain := &v1.Domain{
 		Name: req.Name,
 	}
-	return &v1.DomainServiceDeleteResponse{Domain: domain}, nil
+	return connect.NewResponse(&v1.DomainServiceDeleteResponse{Domain: domain}), nil
 }
 
 func toV1Domain(zone *powerdns.Zone) *v1.Domain {

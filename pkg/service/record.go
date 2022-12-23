@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	connect "github.com/bufbuild/connect-go"
 	"github.com/joeig/go-powerdns/v3"
 	v1 "github.com/majst01/metal-dns/api/v1"
 	"github.com/miekg/dns"
@@ -36,7 +37,8 @@ const (
 	byNameAndType
 )
 
-func (r *RecordService) List(ctx context.Context, req *v1.RecordServiceListRequest) (*v1.RecordServiceListResponse, error) {
+func (r *RecordService) List(ctx context.Context, rq *connect.Request[v1.RecordServiceListRequest]) (*connect.Response[v1.RecordServiceListResponse], error) {
+	req := rq.Msg
 	zone, err := r.pdns.Zones.Get(ctx, req.Domain)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -62,7 +64,7 @@ func (r *RecordService) List(ctx context.Context, req *v1.RecordServiceListReque
 			case byAny:
 				record = toV1Record(r, rset)
 			case byName:
-				if req.Name.Value == *rset.Name {
+				if *req.Name == *rset.Name {
 					record = toV1Record(r, rset)
 				}
 			case byType:
@@ -70,7 +72,7 @@ func (r *RecordService) List(ctx context.Context, req *v1.RecordServiceListReque
 					record = toV1Record(r, rset)
 				}
 			case byNameAndType:
-				if req.Name.Value == *rset.Name && req.Type.String() == string(*rset.Type) {
+				if *req.Name == *rset.Name && req.Type.String() == string(*rset.Type) {
 					record = toV1Record(r, rset)
 				}
 			}
@@ -79,10 +81,11 @@ func (r *RecordService) List(ctx context.Context, req *v1.RecordServiceListReque
 			}
 		}
 	}
-	return &v1.RecordServiceListResponse{Records: records}, nil
+	return connect.NewResponse(&v1.RecordServiceListResponse{Records: records}), nil
 }
 
-func (r *RecordService) Create(ctx context.Context, req *v1.RecordServiceCreateRequest) (*v1.RecordServiceCreateResponse, error) {
+func (r *RecordService) Create(ctx context.Context, rq *connect.Request[v1.RecordServiceCreateRequest]) (*connect.Response[v1.RecordServiceCreateResponse], error) {
+	req := rq.Msg
 	domain, err := domainFromFQDN(req.Name)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -99,10 +102,11 @@ func (r *RecordService) Create(ctx context.Context, req *v1.RecordServiceCreateR
 		Type: req.Type,
 		Ttl:  req.Ttl,
 	}
-	return &v1.RecordServiceCreateResponse{Record: record}, nil
+	return connect.NewResponse(&v1.RecordServiceCreateResponse{Record: record}), nil
 }
 
-func (r *RecordService) Update(ctx context.Context, req *v1.RecordServiceUpdateRequest) (*v1.RecordServiceUpdateResponse, error) {
+func (r *RecordService) Update(ctx context.Context, rq *connect.Request[v1.RecordServiceUpdateRequest]) (*connect.Response[v1.RecordServiceUpdateResponse], error) {
+	req := rq.Msg
 	domain, err := domainFromFQDN(req.Name)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -118,10 +122,11 @@ func (r *RecordService) Update(ctx context.Context, req *v1.RecordServiceUpdateR
 		Type: req.Type,
 		Ttl:  req.Ttl,
 	}
-	return &v1.RecordServiceUpdateResponse{Record: record}, nil
+	return connect.NewResponse(&v1.RecordServiceUpdateResponse{Record: record}), nil
 }
 
-func (r *RecordService) Delete(ctx context.Context, req *v1.RecordServiceDeleteRequest) (*v1.RecordServiceDeleteResponse, error) {
+func (r *RecordService) Delete(ctx context.Context, rq *connect.Request[v1.RecordServiceDeleteRequest]) (*connect.Response[v1.RecordServiceDeleteResponse], error) {
+	req := rq.Msg
 	domain, err := domainFromFQDN(req.Name)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -137,7 +142,7 @@ func (r *RecordService) Delete(ctx context.Context, req *v1.RecordServiceDeleteR
 		Data: req.Data,
 		Type: req.Type,
 	}
-	return &v1.RecordServiceDeleteResponse{Record: record}, nil
+	return connect.NewResponse(&v1.RecordServiceDeleteResponse{Record: record}), nil
 }
 
 // Helper

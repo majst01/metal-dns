@@ -19,8 +19,7 @@ test:
 
 .PHONY: protoc
 protoc:
-	docker pull metalstack/builder
-	docker run --rm --user $$(id -u):$$(id -g) -v ${PWD}:/work metalstack/builder protoc --proto_path=api --go_out=plugins=grpc:api api/v1/*.proto
+	$(MAKE) -C proto protolint
 
 .PHONY: server
 server:

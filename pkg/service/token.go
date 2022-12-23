@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	connect "github.com/bufbuild/connect-go"
+
 	v1 "github.com/majst01/metal-dns/api/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -27,7 +29,8 @@ func NewTokenService(l *zap.Logger, secret string) *TokenService {
 		log:    l,
 	}
 }
-func (t *TokenService) Create(ctx context.Context, req *v1.TokenServiceCreateRequest) (*v1.TokenServiceCreateResponse, error) {
+func (t *TokenService) Create(ctx context.Context, rq *connect.Request[v1.TokenServiceCreateRequest]) (*connect.Response[v1.TokenServiceCreateResponse], error) {
+	req := rq.Msg
 	exp := oneYear
 	if req.Expires != nil {
 		exp = req.Expires.AsDuration()
@@ -36,7 +39,7 @@ func (t *TokenService) Create(ctx context.Context, req *v1.TokenServiceCreateReq
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	return &v1.TokenServiceCreateResponse{Token: token}, nil
+	return connect.NewResponse(&v1.TokenServiceCreateResponse{Token: token}), nil
 }
 
 type dnsClaims struct {

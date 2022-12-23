@@ -23,10 +23,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/majst01/metal-dns/pkg/policies"
 	"github.com/open-policy-agent/opa/rego"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -72,26 +72,31 @@ func NewOpaAuther(log *zap.Logger, secret string) (*OpaAuther, error) {
 	return authz, nil
 }
 
-// OpaStreamInterceptor is OpaAuther StreamServerInterceptor for the
-// server. Only one stream interceptor can be installed.
-// If you want to add extra functionality you might decorate this function.
-func (o *OpaAuther) OpaStreamInterceptor(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-	if err := o.authorize(stream.Context(), info.FullMethod, nil); err != nil {
-		return err
-	}
-
-	return handler(srv, stream)
+func (o *OpaAuther) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
+	return connect.StreamingClientFunc(func(ctx context.Context, spec connect.Spec) connect.StreamingClientConn {
+		o.log.Warnw("streamclient called", "procedure", spec.Procedure)
+		return next(ctx, spec)
+	})
 }
 
-// OpaUnaryInterceptor is OpaAuther UnaryServerInterceptor for the
+// WrapStreamingHandler is a Opa StreamServerInterceptor for the
+// server. Only one stream interceptor can be installed.
+// If you want to add extra functionality you might decorate this function.
+func (o *OpaAuther) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
+	return connect.StreamingHandlerFunc(func(ctx context.Context, conn connect.StreamingHandlerConn) error {
+		return next(ctx, conn)
+	})
+}
+
+// WrapUnary is a Opa UnaryServerInterceptor for the
 // server. Only one unary interceptor can be installed.
 // If you want to add extra functionality you might decorate this function.
-func (o *OpaAuther) OpaUnaryInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
-	if err := o.authorize(ctx, info.FullMethod, req); err != nil {
-		return nil, err
-	}
-
-	return handler(ctx, req)
+func (o *OpaAuther) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
+	// Same as previous UnaryInterceptorFunc.
+	return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+		// FIXME implement
+		return next(ctx, req)
+	})
 }
 
 func (o *OpaAuther) authorize(ctx context.Context, methodName string, req any) error {
