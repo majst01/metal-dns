@@ -1,0 +1,201 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "google/protobuf/duration.proto";
+
+service TokenService {
+  rpc Create(TokenServiceCreateRequest) returns (TokenServiceCreateResponse);
+}
+
+service DomainService {
+  rpc List(DomainServiceListRequest) returns (DomainServiceListResponse);
+  rpc Get(DomainServiceGetRequest) returns (DomainServiceGetResponse);
+  rpc Create(DomainServiceCreateRequest) returns (DomainServiceCreateResponse);
+  rpc Update(DomainServiceUpdateRequest) returns (DomainServiceUpdateResponse);
+  rpc Delete(DomainServiceDeleteRequest) returns (DomainServiceDeleteResponse);
+}
+service RecordService {
+  rpc List(RecordServiceListRequest) returns (RecordServiceListResponse);
+  rpc Delete(RecordServiceDeleteRequest) returns (RecordServiceDeleteResponse);
+  rpc Update(RecordServiceUpdateRequest) returns (RecordServiceUpdateResponse);
+  rpc Create(RecordServiceCreateRequest) returns (RecordServiceCreateResponse);
+}
+
+// Tokens
+message TokenServiceCreateRequest {
+  string issuer = 1;
+  repeated string domains = 2;
+  repeated string permissions = 3;
+  google.protobuf.Duration expires = 4;
+}
+
+message TokenServiceCreateResponse {
+  string token = 1;
+}
+
+// Domains
+
+message Domain {
+  string id = 1;
+  string name = 2;
+  uint32 ttl = 3;
+  string zone_file = 4;
+  string url = 5;
+  repeated string nameservers = 6;
+}
+
+message DomainServiceListRequest {
+  repeated string domains = 1;
+}
+message DomainServiceGetRequest {
+  string name = 1;
+}
+message DomainServiceCreateRequest {
+  string name = 1;
+  repeated string nameservers = 2;
+  optional string url = 5;
+}
+message DomainServiceUpdateRequest {
+  string name = 1;
+  repeated string nameservers = 2;
+  optional string url = 5;
+}
+message DomainServiceDeleteRequest {
+  string name = 1;
+}
+message DomainServiceListResponse {
+  repeated Domain domains = 1;
+}
+message DomainServiceGetResponse {
+  Domain domain = 1;
+}
+message DomainServiceUpdateResponse {
+  Domain domain = 1;
+}
+message DomainServiceCreateResponse {
+  Domain domain = 1;
+}
+message DomainServiceDeleteResponse {
+  Domain domain = 1;
+}
+// Records
+
+message Record {
+  RecordType type = 1;
+  string name = 2;
+  string data = 3;
+  int32 priority = 4;
+  uint32 port = 5;
+  uint32 ttl = 6;
+  int32 weight = 7;
+  int32 flags = 8;
+  string tag = 9;
+}
+
+enum RecordType {
+  UNKNOWN = 0;
+  A = 1;
+  A6 = 2;
+  AAAA = 3;
+  AFSDB = 4;
+  ALIAS = 5;
+  ANY = 6;
+  CAA = 7;
+  CDNSKEY = 8;
+  CDS = 9;
+  CERT = 10;
+  CNAME = 11;
+  DHCID = 12;
+  DLV = 13;
+  DNAME = 14;
+  DNSKEY = 15;
+  DS = 16;
+  EUI48 = 17;
+  EUI64 = 18;
+  HINFO = 19;
+  IPSECKEY = 20;
+  KEY = 21;
+  KX = 22;
+  LOC = 23;
+  LUA = 24;
+  MAILA = 25;
+  MAILB = 26;
+  MINFO = 27;
+  MR = 28;
+  MX = 29;
+  NAPTR = 30;
+  NS = 31;
+  NSEC = 32;
+  NSEC3 = 33;
+  NSEC3PARAM = 34;
+  OPENPGPKEY = 35;
+  PTR = 36;
+  RKEY = 37;
+  RP = 38;
+  RRSIG = 39;
+  SIG = 40;
+  SMIMEA = 41;
+  SOA = 42;
+  SPF = 43;
+  SRV = 44;
+  SSHFP = 45;
+  TKEY = 46;
+  TLSA = 47;
+  TSIG = 48;
+  TXT = 49;
+  URI = 50;
+  WKS = 51;
+  // keep this always the highest number
+  ZZZ = 52;
+}
+
+message RecordServiceListRequest {
+  string domain = 1;
+  RecordType type = 2;
+  optional string name = 3;
+}
+message RecordServiceCreateRequest {
+  RecordType type = 1;
+  string name = 2;
+  string data = 3;
+  int32 priority = 4;
+  uint32 port = 5;
+  uint32 ttl = 6;
+  int32 weight = 7;
+  int32 flags = 8;
+  string tag = 9;
+}
+message RecordServiceUpdateRequest {
+  string uuid = 1;
+  RecordType type = 2;
+  string name = 3;
+  string data = 4;
+  int32 priority = 5;
+  uint32 port = 6;
+  uint32 ttl = 7;
+  int32 weight = 8;
+  int32 flags = 9;
+  string tag = 10;
+}
+message RecordServiceDeleteRequest {
+  RecordType type = 1;
+  string name = 2;
+  string data = 3;
+}
+
+message RecordServiceListResponse {
+  repeated Record records = 1;
+}
+message RecordServiceGetResponse {
+  Record record = 1;
+}
+message RecordServiceDeleteResponse {
+  Record record = 1;
+}
+message RecordServiceUpdateResponse {
+  Record record = 1;
+}
+message RecordServiceCreateResponse {
+  Record record = 1;
+}
