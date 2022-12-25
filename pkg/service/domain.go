@@ -37,7 +37,7 @@ func NewDomainService(l *zap.Logger, baseURL string, vHost string, apikey string
 func (d *DomainService) List(ctx context.Context, rq *connect.Request[v1.DomainServiceListRequest]) (*connect.Response[v1.DomainServiceListResponse], error) {
 	req := rq.Msg
 
-	claims := ctx.Value(token.DNSClaimsKey{}).(*token.DNSClaims)
+	claims := token.ClaimsFromContext(ctx)
 	allowedDomains := claims.Domains
 
 	filtered, err := filterDomains(req.Domains, allowedDomains)

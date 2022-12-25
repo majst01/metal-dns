@@ -113,7 +113,7 @@ func (o *OpaAuther) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 		if err != nil {
 			return nil, err
 		}
-		ctx = context.WithValue(ctx, token.DNSClaimsKey{}, claims)
+		ctx = token.ContextWithClaims(ctx, claims)
 		return next(ctx, req)
 	})
 }
