@@ -58,7 +58,7 @@ Example JWT Payload:
 docker run -d --rm \
   --name powerdns \
   -p 8081:80 \
-  -p 5533:53 powerdns/pdns-auth-46 \
+  -p 5533:53 powerdns/pdns-auth-47 \
     --api=yes \
     --api-key=apipw \
     --webserver=yes \

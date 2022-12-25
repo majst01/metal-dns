@@ -48,7 +48,7 @@ func New(log *zap.Logger, config DialConfig) (*Server, error) {
 func (s *Server) Serve() error {
 	s.log.Infow("starting metal-dns", "version", v.V, "address", s.c.HttpServerEndpoint)
 
-	authz, err := auth.NewOpaAuther(s.log.Desugar(), s.c.Secret)
+	authz, err := auth.NewOpaAuther(s.log, s.c.Secret)
 	if err != nil {
 		return fmt.Errorf("failed to create authorizer %w", err)
 	}

@@ -24,7 +24,10 @@ func main() {
 		token = "unknowntoken"
 	}
 
-	c := client.New(context.TODO(), client.DialConfig{Token: token})
+	c := client.New(context.TODO(), client.DialConfig{
+		Token:   token,
+		BaseURL: "http://localhost:8080",
+	})
 	run(c, logger)
 
 	logger.Info("Success")
@@ -54,7 +57,10 @@ func run(c client.Client, log *zap.Logger) {
 	}
 	log.Sugar().Infow("create token", "token", token)
 
-	c = client.New(context.TODO(), client.DialConfig{Token: token.Msg.Token})
+	c = client.New(context.TODO(), client.DialConfig{
+		Token:   token.Msg.Token,
+		BaseURL: "http://localhost:8080",
+	})
 
 	ds, err := c.Domain().List(ctx, connect.NewRequest(&v1.DomainServiceListRequest{Domains: []string{"example.com."}}))
 	if err != nil {

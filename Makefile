@@ -45,7 +45,7 @@ dockerpush:
 
 .PHONY: pdns-up
 pdns-up: pdns-rm
-	docker run -d --name powerdns -it --rm -p 8081:80 -p 5533:53 powerdns/pdns-auth-46 \
+	docker run -d --name powerdns -it --rm -p 8081:80 -p 5533:53 powerdns/pdns-auth-47 \
 		--api=yes \
 		--api-key=apipw \
 		--webserver=yes \

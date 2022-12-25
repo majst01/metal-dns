@@ -19,6 +19,7 @@
 package auth
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"strings"
@@ -26,13 +27,18 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/majst01/metal-dns/pkg/policies"
 	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/storage/inmem"
+	"github.com/open-policy-agent/opa/topdown"
+
 	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 )
 
-const credentialHeader = "authorization"
+const (
+	authorizationHeader = "authorization"
+)
+
+// FIXME This buffer need to be cleared after every call
+var buf bytes.Buffer
 
 // OpaAuther is a gRPC server authorizer using OPA as backend
 type OpaAuther struct {
@@ -42,11 +48,7 @@ type OpaAuther struct {
 }
 
 // NewOpaAuther creates an OPA authorizer
-func NewOpaAuther(log *zap.Logger, secret string) (*OpaAuther, error) {
-	authz := &OpaAuther{
-		log:    log.Sugar(),
-		secret: secret,
-	}
+func NewOpaAuther(log *zap.SugaredLogger, secret string) (*OpaAuther, error) {
 	files, err := policies.RegoPolicies.ReadDir(".")
 	if err != nil {
 		return nil, err
@@ -60,16 +62,27 @@ func NewOpaAuther(log *zap.Logger, secret string) (*OpaAuther, error) {
 		}
 		moduleLoads = append(moduleLoads, rego.Module(f.Name(), string(data)))
 	}
+	// will be accessible as data.secret/roles/methods in rego rules
+	data := inmem.NewFromObject(map[string]any{
+		"secret": secret,
+	})
+
+	moduleLoads = append(moduleLoads, rego.Query("x = data.api.v1.metalstack.io.authz.decision"))
+	moduleLoads = append(moduleLoads, rego.EnablePrintStatements(true))
+	moduleLoads = append(moduleLoads, rego.PrintHook(topdown.NewPrintHook(&buf)))
+	moduleLoads = append(moduleLoads, rego.Store(data))
 
 	qDecision, err := rego.New(
-		append(moduleLoads, rego.Query("x = data.api.v1.metalstack.io.authz.decision"))...,
+		moduleLoads...,
 	).PrepareForEval(context.Background())
 	if err != nil {
 		return nil, err
 	}
-
-	authz.qDecision = &qDecision
-	return authz, nil
+	return &OpaAuther{
+		log:       log,
+		secret:    secret,
+		qDecision: &qDecision,
+	}, nil
 }
 
 func (o *OpaAuther) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
@@ -94,30 +107,33 @@ func (o *OpaAuther) WrapStreamingHandler(next connect.StreamingHandlerFunc) conn
 func (o *OpaAuther) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	// Same as previous UnaryInterceptorFunc.
 	return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-		// FIXME implement
+		err := o.authorize(ctx, req.Spec().Procedure, req.Header().Get, req.Any())
+		if err != nil {
+			return nil, err
+		}
 		return next(ctx, req)
 	})
 }
-
-func (o *OpaAuther) authorize(ctx context.Context, methodName string, req any) error {
+func (o *OpaAuther) authorize(ctx context.Context, methodName string, jwtTokenfunc func(string) string, req any) error {
+	o.log.Debugw("authorize", "method", methodName, "req", req)
 	// FIXME put this into a central config map
 	if methodName == "/grpc.health.v1.Health/Check" {
 		return nil
 	}
-	md, jwt, err := JWTFromContext(ctx)
+
+	jwtToken, err := ExtractJWT(jwtTokenfunc)
 	if err != nil {
-		return status.Error(codes.Unauthenticated, err.Error())
+		return connect.NewError(connect.CodeUnauthenticated, err)
+	}
+	ok, err := o.decide(ctx, newOpaRequest(methodName, req, jwtToken), methodName)
+	if err != nil {
+		return connect.NewError(connect.CodeUnauthenticated, err)
 	}
 
-	o.log.Infow("authorize", "metadata", md)
-	ok, err := o.decide(ctx, newOpaRequest(methodName, req, jwt, o.secret), methodName)
-	if err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
 	if ok {
 		return nil
 	}
-	return status.Error(codes.Unauthenticated, "not allowed to call: "+methodName)
+	return connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("not allowed to call: %s", methodName))
 
 }
 
@@ -154,27 +170,23 @@ func (o *OpaAuther) decide(ctx context.Context, input map[string]any, method str
 	return allow, nil
 }
 
-func newOpaRequest(method string, req any, token, secret string) map[string]any {
+func newOpaRequest(method string, req any, token string) map[string]any {
 	return map[string]any{
 		"method":  method,
 		"request": req,
 		"token":   token,
-		"secret":  secret,
 	}
 }
 
-func JWTFromContext(ctx context.Context) (metadata.MD, string, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return nil, "", fmt.Errorf("no metadata found")
+func ExtractJWT(jwtTokenfunc func(string) string) (string, error) {
+	bearer := jwtTokenfunc(authorizationHeader)
+	if bearer == "" {
+		return "", fmt.Errorf("no header:%s found", authorizationHeader)
 	}
-	token, exists := md[credentialHeader]
-	if !exists {
-		return nil, "", fmt.Errorf("no token found")
-	}
-	_, jwt, found := strings.Cut(token[0], " ")
+	// can be bearer or token
+	_, jwtToken, found := strings.Cut(bearer, " ")
 	if !found {
-		return nil, "", fmt.Errorf("token format error")
+		return "", fmt.Errorf("no bearer token found")
 	}
-	return md, jwt, nil
+	return jwtToken, nil
 }

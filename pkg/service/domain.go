@@ -36,7 +36,7 @@ func NewDomainService(l *zap.Logger, baseURL string, vHost string, apikey string
 
 func (d *DomainService) List(ctx context.Context, rq *connect.Request[v1.DomainServiceListRequest]) (*connect.Response[v1.DomainServiceListResponse], error) {
 	req := rq.Msg
-	_, jwt, err := auth.JWTFromContext(ctx)
+	jwt, err := auth.ExtractJWT(rq.Header().Get)
 	if err != nil {
 		return nil, err
 	}
