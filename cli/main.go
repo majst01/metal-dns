@@ -38,8 +38,11 @@ func run(c client.Client, log *zap.Logger) {
 	defer cancel()
 
 	token, err := c.Token().Create(ctx, connect.NewRequest(&v1.TokenServiceCreateRequest{
-		Issuer:  "John Doe",
-		Domains: []string{"example.com."},
+		Issuer: "John Doe",
+		Domains: []string{
+			"example.com.",
+			"a.example.com.",
+		},
 		Permissions: []string{
 			"/api.v1.DomainService/Get",
 			"/api.v1.DomainService/List",
