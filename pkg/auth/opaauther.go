@@ -151,6 +151,9 @@ func (o *OpaAuther) decide(ctx context.Context, input map[string]any, method str
 	if !ok {
 		return false, fmt.Errorf("error evaluating rego result set: unexpected response type")
 	}
+
+	o.log.Debugw("made auth decision", "decision", decision)
+
 	allow, ok := decision["allow"].(bool)
 	if !ok {
 		return false, fmt.Errorf("error evaluating rego result set: unexpected response type")
@@ -163,11 +166,9 @@ func (o *OpaAuther) decide(ctx context.Context, input map[string]any, method str
 		}
 		return false, fmt.Errorf("access denied to:%s", method)
 	}
+	o.log.Debugw("made auth decision", "results", results)
 
-	// TODO remove, only for devel:
-	// o.log.Infow("made auth decision", "results", results)
-
-	return allow, nil
+	return true, nil
 }
 
 func newOpaRequest(method string, req any, token string) map[string]any {
