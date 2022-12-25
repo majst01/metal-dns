@@ -8,5 +8,5 @@ is_token_valid {
 }
 
 token := {"valid": valid, "payload": payload} {
-	[valid, _, payload] := io.jwt.decode_verify(input.token, {"secret": input.secret})
+	[valid, _, payload] := io.jwt.decode_verify(input.token, {"secret": data.secret})
 }
