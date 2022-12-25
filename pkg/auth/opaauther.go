@@ -26,6 +26,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/majst01/metal-dns/pkg/policies"
+	"github.com/majst01/metal-dns/pkg/token"
 
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/storage/inmem"
@@ -108,33 +109,34 @@ func (o *OpaAuther) WrapStreamingHandler(next connect.StreamingHandlerFunc) conn
 func (o *OpaAuther) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	// Same as previous UnaryInterceptorFunc.
 	return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-		err := o.authorize(ctx, req.Spec().Procedure, req.Header().Get, req.Any())
+		claims, err := o.authorize(ctx, req.Spec().Procedure, req.Header().Get, req.Any())
 		if err != nil {
 			return nil, err
 		}
+		ctx = context.WithValue(ctx, token.DNSClaimsKey{}, claims)
 		return next(ctx, req)
 	})
 }
-func (o *OpaAuther) authorize(ctx context.Context, methodName string, jwtTokenfunc func(string) string, req any) error {
+func (o *OpaAuther) authorize(ctx context.Context, methodName string, jwtTokenfunc func(string) string, req any) (*token.DNSClaims, error) {
 	o.log.Debugw("authorize", "method", methodName, "req", req)
 	// FIXME put this into a central config map
 	if methodName == "/grpc.health.v1.Health/Check" {
-		return nil
+		return nil, nil
 	}
-
 	jwtToken, err := ExtractJWT(jwtTokenfunc)
 	if err != nil {
-		return connect.NewError(connect.CodeUnauthenticated, err)
+		return nil, connect.NewError(connect.CodeUnauthenticated, err)
 	}
+	claims, _ := token.ParseJWTToken(jwtToken)
 	ok, err := o.decide(ctx, newOpaRequest(methodName, req, jwtToken), methodName)
 	if err != nil {
-		return connect.NewError(connect.CodeUnauthenticated, err)
+		return nil, connect.NewError(connect.CodeUnauthenticated, err)
 	}
 
 	if ok {
-		return nil
+		return claims, nil
 	}
-	return connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("not allowed to call: %s", methodName))
+	return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("not allowed to call: %s", methodName))
 
 }
 
