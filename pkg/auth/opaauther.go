@@ -26,6 +26,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/majst01/metal-dns/pkg/policies"
+
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/storage/inmem"
 	"github.com/open-policy-agent/opa/topdown"

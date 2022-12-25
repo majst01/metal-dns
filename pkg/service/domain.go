@@ -10,6 +10,7 @@ import (
 	"github.com/joeig/go-powerdns/v3"
 	v1 "github.com/majst01/metal-dns/api/v1"
 	"github.com/majst01/metal-dns/pkg/auth"
+	"github.com/majst01/metal-dns/pkg/token"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	healthgrpc "google.golang.org/grpc/health/grpc_health_v1"
@@ -40,7 +41,7 @@ func (d *DomainService) List(ctx context.Context, rq *connect.Request[v1.DomainS
 	if err != nil {
 		return nil, err
 	}
-	claims, err := parseJWTToken(jwt)
+	claims, err := token.ParseJWTToken(jwt)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
