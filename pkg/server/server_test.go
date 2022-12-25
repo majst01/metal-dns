@@ -38,17 +38,17 @@ func TestDomainCRUD(t *testing.T) {
 			Issuer:  "Tester",
 			Domains: []string{"example.com."},
 			Permissions: []string{
-				"/v1.TokenService/Create",
-				"/v1.DomainService/Get",
-				"/v1.DomainService/List",
-				"/v1.DomainService/Create",
-				"/v1.DomainService/Update",
-				"/v1.DomainService/Delete",
-				"/v1.RecordService/Get",
-				"/v1.RecordService/List",
-				"/v1.RecordService/Create",
-				"/v1.RecordService/Update",
-				"/v1.RecordService/Delete",
+				"/api.v1.TokenService/Create",
+				"/api.v1.DomainService/Get",
+				"/api.v1.DomainService/List",
+				"/api.v1.DomainService/Create",
+				"/api.v1.DomainService/Update",
+				"/api.v1.DomainService/Delete",
+				"/api.v1.RecordService/Get",
+				"/api.v1.RecordService/List",
+				"/api.v1.RecordService/Create",
+				"/api.v1.RecordService/Update",
+				"/api.v1.RecordService/Delete",
 			},
 			Expires: durationpb.New(1 * time.Hour),
 		},
@@ -111,8 +111,8 @@ func TestDomainService_List_DomainsFiltered(t *testing.T) {
 			Issuer:  "Tester",
 			Domains: []string{"example.com.", "foo.bar."},
 			Permissions: []string{
-				"/v1.DomainService/List",
-				"/v1.DomainService/Create",
+				"/api.v1.DomainService/List",
+				"/api.v1.DomainService/Create",
 			},
 		},
 		))
@@ -182,16 +182,16 @@ func TestRecordCRUD(t *testing.T) {
 			Issuer:  "Tester",
 			Domains: []string{"a.example.com."},
 			Permissions: []string{
-				"/v1.TokenService/Create",
-				"/v1.DomainService/Get",
-				"/v1.DomainService/List",
-				"/v1.DomainService/Create",
-				"/v1.DomainService/Update",
-				"/v1.DomainService/Delete",
-				"/v1.RecordService/List",
-				"/v1.RecordService/Create",
-				"/v1.RecordService/Update",
-				"/v1.RecordService/Delete",
+				"/api.v1.TokenService/Create",
+				"/api.v1.DomainService/Get",
+				"/api.v1.DomainService/List",
+				"/api.v1.DomainService/Create",
+				"/api.v1.DomainService/Update",
+				"/api.v1.DomainService/Delete",
+				"/api.v1.RecordService/List",
+				"/api.v1.RecordService/Create",
+				"/api.v1.RecordService/Update",
+				"/api.v1.RecordService/Delete",
 			},
 		},
 		))
@@ -252,7 +252,7 @@ func startGRPCServer(pdns *test.Pdns) (string, error) {
 		PdnsApiVHost:    pdns.VHost,
 	}
 
-	s, err := New(log, config)
+	s, err := New(log.Sugar(), config)
 	if err != nil {
 		return "", err
 	}

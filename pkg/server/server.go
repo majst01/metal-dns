@@ -38,9 +38,9 @@ type DialConfig struct {
 	PdnsApiVHost    string
 }
 
-func New(log *zap.Logger, config DialConfig) (*Server, error) {
+func New(log *zap.SugaredLogger, config DialConfig) (*Server, error) {
 	return &Server{
-		log: log.Sugar(),
+		log: log,
 		c:   config,
 	}, nil
 }

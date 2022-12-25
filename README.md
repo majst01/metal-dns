@@ -35,15 +35,15 @@ Example JWT Payload:
      "b.example.com"
   ],
   "permissions": [
-    "/v1.DomainService/Get",
-    "/v1.DomainService/List",
-    "/v1.DomainService/Create",
-    "/v1.DomainService/Update",
-    "/v1.DomainService/Delete",
-    "/v1.RecordService/Create",
-    "/v1.RecordService/List",
-    "/v1.RecordService/Update",
-    "/v1.RecordService/Delete"
+    "/api.v1.DomainService/Get",
+    "/api.v1.DomainService/List",
+    "/api.v1.DomainService/Create",
+    "/api.v1.DomainService/Update",
+    "/api.v1.DomainService/Delete",
+    "/api.v1.RecordService/Create",
+    "/api.v1.RecordService/List",
+    "/api.v1.RecordService/Update",
+    "/api.v1.RecordService/Delete"
   ]
 }
 ```
