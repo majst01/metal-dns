@@ -7,10 +7,10 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/majst01/metal-dns/api/v1"
+	"github.com/majst01/metal-dns/pkg/token"
 	"github.com/majst01/metal-dns/test"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
-	"google.golang.org/grpc/metadata"
 )
 
 func TestDomainListCreate(t *testing.T) {
@@ -27,11 +27,13 @@ func TestDomainListCreate(t *testing.T) {
 	rs := NewRecordService(log, pdns.BaseURL, pdns.VHost, pdns.APIKey, nil)
 	require.NotNil(t, ds)
 
-	token, err := newJWTToken("test", "Tester", []string{"example.com"}, nil, time.Hour, "secret")
+	jwttoken, err := newJWTToken("test", "Tester", []string{"example.com"}, nil, time.Hour, "secret")
 	require.NoError(t, err)
-	require.NotNil(t, token)
+	require.NotNil(t, jwttoken)
 
-	ctx = metadata.NewIncomingContext(ctx, metadata.New(map[string]string{"authorization": "Bearer " + token}))
+	ctx = context.WithValue(ctx, token.DNSClaimsKey{}, &token.DNSClaims{
+		Domains: []string{"example.com"},
+	})
 
 	domains, err := ds.List(ctx, connect.NewRequest(&v1.DomainServiceListRequest{}))
 	require.NoError(t, err)

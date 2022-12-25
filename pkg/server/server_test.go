@@ -33,7 +33,7 @@ func TestDomainCRUD(t *testing.T) {
 	c := client.New(ctx, clientConfig)
 	require.NotNil(t, c)
 
-	token, err := c.Token().Create(ctx,
+	jwttoken, err := c.Token().Create(ctx,
 		connect.NewRequest(&v1.TokenServiceCreateRequest{
 			Issuer:  "Tester",
 			Domains: []string{"example.com."},
@@ -54,11 +54,11 @@ func TestDomainCRUD(t *testing.T) {
 		},
 		))
 	require.NoError(t, err)
-	require.NotEmpty(t, token)
+	require.NotEmpty(t, jwttoken)
 
 	// Now create a new client connection with a token which can modify domains/records
 	clientConfig = client.DialConfig{
-		Token: token.Msg.Token,
+		Token: jwttoken.Msg.Token,
 	}
 	c = client.New(ctx, clientConfig)
 	require.NotNil(t, c)
