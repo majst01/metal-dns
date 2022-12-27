@@ -2,17 +2,22 @@ package server
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/majst01/metal-dns/api/v1"
+	"github.com/majst01/metal-dns/api/v1/apiv1connect"
+
+	"github.com/majst01/metal-dns/pkg/auth"
 	"github.com/majst01/metal-dns/pkg/client"
+	"github.com/majst01/metal-dns/pkg/service"
 	"github.com/majst01/metal-dns/test"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"go.uber.org/zap/zaptest"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
@@ -22,13 +27,14 @@ func TestDomainCRUD(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, pdns)
 
-	addr, err := startGRPCServer(pdns)
+	addr, err := startGRPCServer(t, pdns)
 	require.NoError(t, err)
 	require.NotEmpty(t, addr)
 
 	// First create a connection which is only able to get a token
 	clientConfig := client.DialConfig{
-		Token: "notokenforfirstreques",
+		Token:   "notokenforfirstrequest",
+		BaseURL: addr,
 	}
 	c := client.New(ctx, clientConfig)
 	require.NotNil(t, c)
@@ -58,7 +64,8 @@ func TestDomainCRUD(t *testing.T) {
 
 	// Now create a new client connection with a token which can modify domains/records
 	clientConfig = client.DialConfig{
-		Token: jwttoken.Msg.Token,
+		Token:   jwttoken.Msg.Token,
+		BaseURL: addr,
 	}
 	c = client.New(ctx, clientConfig)
 	require.NotNil(t, c)
@@ -68,7 +75,7 @@ func TestDomainCRUD(t *testing.T) {
 	require.Empty(t, ds.Msg.Domains)
 
 	d1, err := c.Domain().Get(ctx, connect.NewRequest(&v1.DomainServiceGetRequest{Name: "example.com."}))
-	require.ErrorIs(t, err, status.Error(codes.NotFound, "Not Found"))
+	require.Equal(t, connect.CodeOf(err), connect.CodeNotFound)
 	require.Nil(t, d1)
 
 	d2, err := c.Domain().Create(ctx, connect.NewRequest(&v1.DomainServiceCreateRequest{Name: "example.com.", Nameservers: []string{"ns1.example.com."}}))
@@ -85,7 +92,7 @@ func TestDomainCRUD(t *testing.T) {
 	require.NotNil(t, d3)
 
 	d4, err := c.Domain().Get(ctx, connect.NewRequest(&v1.DomainServiceGetRequest{Name: "example.com."}))
-	require.ErrorIs(t, err, status.Error(codes.NotFound, "Not Found"))
+	require.Equal(t, connect.CodeOf(err), connect.CodeNotFound)
 	require.Nil(t, d4)
 }
 
@@ -95,13 +102,14 @@ func TestDomainService_List_DomainsFiltered(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, pdns)
 
-	addr, err := startGRPCServer(pdns)
+	addr, err := startGRPCServer(t, pdns)
 	require.NoError(t, err)
 	require.NotEmpty(t, addr)
 
 	// First create a connection which is only able to get a token
 	clientConfig := client.DialConfig{
-		Token: "notokenforfirstrequest",
+		Token:   "notokenforfirstrequest",
+		BaseURL: addr,
 	}
 	c := client.New(ctx, clientConfig)
 	require.NotNil(t, c)
@@ -121,7 +129,8 @@ func TestDomainService_List_DomainsFiltered(t *testing.T) {
 
 	// Now create a new client connection with a token which can modify domains/records
 	clientConfig = client.DialConfig{
-		Token: token.Msg.Token,
+		Token:   token.Msg.Token,
+		BaseURL: addr,
 	}
 	c = client.New(ctx, clientConfig)
 	require.NotNil(t, c)
@@ -146,7 +155,8 @@ func TestDomainService_List_DomainsFiltered(t *testing.T) {
 
 	// List wrong domain
 	ds, err = c.Domain().List(ctx, connect.NewRequest(&v1.DomainServiceListRequest{Domains: []string{"sample.com."}}))
-	require.ErrorIs(t, err, status.Error(codes.Unauthenticated, "domain:sample.com. is not allowed to list, only [example.com. foo.bar.]"))
+	require.Equal(t, connect.CodeOf(err), connect.CodeUnauthenticated)
+	require.Equal(t, err.Error(), "unauthenticated: domain:sample.com. is not allowed to list, only [example.com. foo.bar.]")
 	require.Nil(t, ds)
 
 	// List without domain specified should returned allowed domains
@@ -166,13 +176,14 @@ func TestRecordCRUD(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, pdns)
 
-	addr, err := startGRPCServer(pdns)
+	addr, err := startGRPCServer(t, pdns)
 	require.NoError(t, err)
 	require.NotEmpty(t, addr)
 
 	// First create a connection which is only able to get a token
 	clientConfig := client.DialConfig{
-		Token: "notokenforfirstrequest",
+		Token:   "notokenforfirstrequest",
+		BaseURL: addr,
 	}
 	c := client.New(ctx, clientConfig)
 	require.NotNil(t, c)
@@ -200,7 +211,8 @@ func TestRecordCRUD(t *testing.T) {
 
 	// Now create a new client connection with a token which can modify domains/records
 	clientConfig = client.DialConfig{
-		Token: token.Msg.Token,
+		Token:   token.Msg.Token,
+		BaseURL: addr,
 	}
 	c = client.New(ctx, clientConfig)
 	require.NotNil(t, c)
@@ -234,33 +246,40 @@ func TestRecordCRUD(t *testing.T) {
 	require.NotNil(t, d2)
 
 	d3, err := c.Domain().Get(ctx, connect.NewRequest(&v1.DomainServiceGetRequest{Name: "a.example.com."}))
-	require.ErrorIs(t, err, status.Error(codes.NotFound, "Not Found"))
+	require.Equal(t, connect.CodeOf(err), connect.CodeNotFound)
 	require.Nil(t, d3)
 }
 
 // Helper
 
-func startGRPCServer(pdns *test.Pdns) (string, error) {
-	log, _ := zap.NewProduction()
+func startGRPCServer(t *testing.T, pdns *test.Pdns) (string, error) {
+	log := zaptest.NewLogger(t)
 
 	config := DialConfig{
-		HttpServerEndpoint: "localhost:8080",
-		Secret:             "secret",
-
 		PdnsApiUrl:      pdns.BaseURL,
 		PdnsApiPassword: pdns.APIKey,
 		PdnsApiVHost:    pdns.VHost,
 	}
 
-	s, err := New(log.Sugar(), config)
-	if err != nil {
-		return "", err
-	}
+	mux := http.NewServeMux()
 
-	go func() {
-		if err := s.Serve(); err != nil {
-			panic(err)
-		}
-	}()
-	return config.HttpServerEndpoint, nil
+	authz, err := auth.NewOpaAuther(log.Sugar(), "secret")
+	if err != nil {
+		return "", fmt.Errorf("failed to create authorizer %w", err)
+	}
+	interceptors := connect.WithInterceptors(authz)
+
+	domainService := service.NewDomainService(log, config.PdnsApiUrl, config.PdnsApiVHost, config.PdnsApiPassword, nil)
+	recordService := service.NewRecordService(log, config.PdnsApiUrl, config.PdnsApiVHost, config.PdnsApiPassword, nil)
+	tokenService := service.NewTokenService(log, "secret")
+
+	mux.Handle(apiv1connect.NewDomainServiceHandler(domainService, interceptors))
+	mux.Handle(apiv1connect.NewRecordServiceHandler(recordService, interceptors))
+	mux.Handle(apiv1connect.NewTokenServiceHandler(tokenService, interceptors))
+
+	server := httptest.NewUnstartedServer(mux)
+	server.EnableHTTP2 = true
+	server.Start()
+
+	return server.URL, nil
 }

@@ -10,8 +10,6 @@ import (
 	v1 "github.com/majst01/metal-dns/api/v1"
 	"github.com/majst01/metal-dns/pkg/token"
 	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
@@ -38,7 +36,7 @@ func (t *TokenService) Create(ctx context.Context, rq *connect.Request[v1.TokenS
 	}
 	token, err := newJWTToken("metal-dns", req.Issuer, req.Domains, req.Permissions, exp, t.secret)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	return connect.NewResponse(&v1.TokenServiceCreateResponse{Token: token}), nil
 }

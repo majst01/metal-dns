@@ -11,11 +11,7 @@ import (
 	v1 "github.com/majst01/metal-dns/api/v1"
 	"github.com/majst01/metal-dns/pkg/token"
 	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
-	healthgrpc "google.golang.org/grpc/health/grpc_health_v1"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
-
-	"google.golang.org/grpc/status"
 )
 
 type DomainService struct {
@@ -42,12 +38,12 @@ func (d *DomainService) List(ctx context.Context, rq *connect.Request[v1.DomainS
 
 	filtered, err := filterDomains(req.Domains, allowedDomains)
 	if err != nil {
-		return nil, status.Error(codes.Unauthenticated, err.Error())
+		return nil, connect.NewError(connect.CodeUnauthenticated, err)
 	}
 
 	zones, err := d.pdns.Zones.List(ctx)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	domains := []*v1.Domain{}
 	for i := range zones {
@@ -66,7 +62,7 @@ func (d *DomainService) Get(ctx context.Context, rq *connect.Request[v1.DomainSe
 	req := rq.Msg
 	zone, err := d.pdns.Zones.Get(ctx, req.Name)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, connect.NewError(connect.CodeNotFound, err)
 	}
 	domain := toV1Domain(zone)
 	return connect.NewResponse(&v1.DomainServiceGetResponse{Domain: domain}), nil
@@ -91,7 +87,7 @@ func (d *DomainService) Create(ctx context.Context, rq *connect.Request[v1.Domai
 	}
 	zone, err := d.pdns.Zones.Add(ctx, zone)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	domain := toV1Domain(zone)
 	return connect.NewResponse(&v1.DomainServiceCreateResponse{Domain: domain}), nil
@@ -101,7 +97,7 @@ func (d *DomainService) Update(ctx context.Context, rq *connect.Request[v1.Domai
 	req := rq.Msg
 	existingZone, err := d.pdns.Zones.Get(ctx, req.Name)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, connect.NewError(connect.CodeNotFound, err)
 	}
 
 	existingZone.Nameservers = req.Nameservers
@@ -111,7 +107,7 @@ func (d *DomainService) Update(ctx context.Context, rq *connect.Request[v1.Domai
 
 	err = d.pdns.Zones.Change(ctx, *existingZone.Name, existingZone)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	domain := toV1Domain(existingZone)
@@ -122,7 +118,7 @@ func (d *DomainService) Delete(ctx context.Context, rq *connect.Request[v1.Domai
 	req := rq.Msg
 	err := d.pdns.Zones.Delete(ctx, req.Name)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	domain := &v1.Domain{
 		Name: req.Name,
@@ -182,11 +178,5 @@ func (d *DomainService) Check(ctx context.Context, in *healthpb.HealthCheckReque
 			Status: healthpb.HealthCheckResponse_SERVING,
 		}, nil
 	}
-	return nil, status.Error(codes.NotFound, "unknown service")
-}
-
-// Watch implements `service Health`.
-func (d *DomainService) Watch(in *healthpb.HealthCheckRequest, stream healthgrpc.Health_WatchServer) error {
-	// TODO not implemented
-	return nil
+	return nil, connect.NewError(connect.CodeNotFound, err)
 }

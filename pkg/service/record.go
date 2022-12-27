@@ -11,8 +11,6 @@ import (
 	v1 "github.com/majst01/metal-dns/api/v1"
 	"github.com/miekg/dns"
 	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type RecordService struct {
@@ -41,7 +39,7 @@ func (r *RecordService) List(ctx context.Context, rq *connect.Request[v1.RecordS
 	req := rq.Msg
 	zone, err := r.pdns.Zones.Get(ctx, req.Domain)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	recordSearch := byAny
 	if req.Name != nil && req.Type == v1.RecordType_ANY {
@@ -88,13 +86,13 @@ func (r *RecordService) Create(ctx context.Context, rq *connect.Request[v1.Recor
 	req := rq.Msg
 	domain, err := domainFromFQDN(req.Name)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	rrtype := powerdns.RRType(req.Type.String())
 	r.log.Sugar().Infof("create record domain:%s name:%s type:%s", domain, req.Name, rrtype)
 	err = r.pdns.Records.Add(ctx, domain, req.Name, rrtype, req.Ttl, []string{req.Data})
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	record := &v1.Record{
 		Name: req.Name,
@@ -109,12 +107,12 @@ func (r *RecordService) Update(ctx context.Context, rq *connect.Request[v1.Recor
 	req := rq.Msg
 	domain, err := domainFromFQDN(req.Name)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	rrtype := powerdns.RRType(req.Type.String())
 	err = r.pdns.Records.Change(ctx, domain, req.Name, rrtype, req.Ttl, []string{req.Data})
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	record := &v1.Record{
 		Name: req.Name,
@@ -129,12 +127,12 @@ func (r *RecordService) Delete(ctx context.Context, rq *connect.Request[v1.Recor
 	req := rq.Msg
 	domain, err := domainFromFQDN(req.Name)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	rrtype := powerdns.RRType(req.Type.String())
 	err = r.pdns.Records.Delete(ctx, domain, req.Name, rrtype)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	record := &v1.Record{
