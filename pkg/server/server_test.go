@@ -253,7 +253,7 @@ func TestRecordCRUD(t *testing.T) {
 // Helper
 
 func startGRPCServer(t *testing.T, pdns *test.Pdns) (string, error) {
-	log := zaptest.NewLogger(t)
+	log := zaptest.NewLogger(t).Sugar()
 
 	config := DialConfig{
 		PdnsApiUrl:      pdns.BaseURL,
@@ -263,7 +263,7 @@ func startGRPCServer(t *testing.T, pdns *test.Pdns) (string, error) {
 
 	mux := http.NewServeMux()
 
-	authz, err := auth.NewOpaAuther(log.Sugar(), "secret")
+	authz, err := auth.NewOpaAuther(log, "secret")
 	if err != nil {
 		return "", fmt.Errorf("failed to create authorizer %w", err)
 	}

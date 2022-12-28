@@ -28,12 +28,12 @@ func main() {
 		Token:   token,
 		BaseURL: "http://localhost:8080",
 	})
-	run(c, logger)
+	run(c, logger.Sugar())
 
 	logger.Info("Success")
 }
 
-func run(c client.Client, log *zap.Logger) {
+func run(c client.Client, log *zap.SugaredLogger) {
 	ctx, cancel := context.WithTimeout(context.Background(), grpcRequestTimeout)
 	defer cancel()
 
@@ -58,7 +58,7 @@ func run(c client.Client, log *zap.Logger) {
 	if err != nil {
 		log.Error("could not create token", zap.Error(err))
 	}
-	log.Sugar().Infow("create token", "token", token)
+	log.Infow("create token", "token", token)
 
 	c = client.New(context.TODO(), client.DialConfig{
 		Token:   token.Msg.Token,
@@ -69,14 +69,14 @@ func run(c client.Client, log *zap.Logger) {
 	if err != nil {
 		log.Fatal("could not list domain", zap.Error(err))
 	}
-	log.Sugar().Infow("list domains", "domains", ds.Msg.Domains)
+	log.Infow("list domains", "domains", ds.Msg.Domains)
 
 	rs, err := c.Record().List(ctx, connect.NewRequest(&v1.RecordServiceListRequest{Domain: "example.com."}))
 	if err != nil {
 		log.Fatal("could not list records", zap.Error(err))
 	}
 
-	log.Sugar().Infow("list records", "records", rs.Msg.Records)
+	log.Infow("list records", "records", rs.Msg.Records)
 	// create
 	dcr := &v1.DomainServiceCreateRequest{
 		Name:        "a.example.com.",
@@ -86,7 +86,7 @@ func run(c client.Client, log *zap.Logger) {
 	if err != nil {
 		log.Error("could not create domain", zap.Error(err))
 	} else {
-		log.Sugar().Infow("created domain", "domain", d.Msg.Domain)
+		log.Infow("created domain", "domain", d.Msg.Domain)
 	}
 
 	// create record
@@ -100,7 +100,7 @@ func run(c client.Client, log *zap.Logger) {
 	if err != nil {
 		log.Error("could not create record", zap.Error(err))
 	} else {
-		log.Sugar().Infow("created record", "record", r.Msg.Record)
+		log.Infow("created record", "record", r.Msg.Record)
 	}
 
 	rlr := &v1.RecordServiceListRequest{Domain: "example.com.", Type: v1.RecordType_A}
@@ -108,6 +108,6 @@ func run(c client.Client, log *zap.Logger) {
 	if err != nil {
 		log.Error("could not list records", zap.Error(err))
 	} else {
-		log.Sugar().Infow("list records", "records", records.Msg.Records)
+		log.Infow("list records", "records", records.Msg.Records)
 	}
 }

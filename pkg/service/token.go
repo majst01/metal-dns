@@ -19,16 +19,17 @@ const oneYear = time.Hour * 24 * 360
 
 type TokenService struct {
 	secret string
-	log    *zap.Logger
+	log    *zap.SugaredLogger
 }
 
-func NewTokenService(l *zap.Logger, secret string) *TokenService {
+func NewTokenService(l *zap.SugaredLogger, secret string) *TokenService {
 	return &TokenService{
 		secret: secret,
-		log:    l,
+		log:    l.Named("token"),
 	}
 }
 func (t *TokenService) Create(ctx context.Context, rq *connect.Request[v1.TokenServiceCreateRequest]) (*connect.Response[v1.TokenServiceCreateResponse], error) {
+	t.log.Debugw("create", "req", rq)
 	req := rq.Msg
 	exp := oneYear
 	if req.Expires != nil {

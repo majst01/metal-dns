@@ -10,7 +10,7 @@ import (
 	"github.com/majst01/metal-dns/pkg/token"
 	"github.com/majst01/metal-dns/test"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest"
 )
 
 func TestDomainListCreate(t *testing.T) {
@@ -19,7 +19,7 @@ func TestDomainListCreate(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, pdns)
 
-	log, _ := zap.NewProduction()
+	log := zaptest.NewLogger(t).Sugar()
 
 	ds := NewDomainService(log, pdns.BaseURL, pdns.VHost, pdns.APIKey, nil)
 	require.NotNil(t, ds)

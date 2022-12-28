@@ -55,9 +55,9 @@ func (s *Server) Serve() error {
 
 	interceptors := connect.WithInterceptors(authz)
 
-	domainService := service.NewDomainService(s.log.Desugar(), s.c.PdnsApiUrl, s.c.PdnsApiVHost, s.c.PdnsApiPassword, nil)
-	recordService := service.NewRecordService(s.log.Desugar(), s.c.PdnsApiUrl, s.c.PdnsApiVHost, s.c.PdnsApiPassword, nil)
-	tokenService := service.NewTokenService(s.log.Desugar(), s.c.Secret)
+	domainService := service.NewDomainService(s.log, s.c.PdnsApiUrl, s.c.PdnsApiVHost, s.c.PdnsApiPassword, nil)
+	recordService := service.NewRecordService(s.log, s.c.PdnsApiUrl, s.c.PdnsApiVHost, s.c.PdnsApiPassword, nil)
+	tokenService := service.NewTokenService(s.log, s.c.Secret)
 
 	mux := http.NewServeMux()
 

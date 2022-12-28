@@ -15,14 +15,14 @@ import (
 
 type RecordService struct {
 	pdns *powerdns.Client
-	log  *zap.Logger
+	log  *zap.SugaredLogger
 }
 
-func NewRecordService(l *zap.Logger, baseURL string, vHost string, apikey string, httpClient *http.Client) *RecordService {
+func NewRecordService(l *zap.SugaredLogger, baseURL string, vHost string, apikey string, httpClient *http.Client) *RecordService {
 	pdns := powerdns.NewClient(baseURL, vHost, map[string]string{"X-API-Key": apikey}, httpClient)
 	return &RecordService{
 		pdns: pdns,
-		log:  l,
+		log:  l.Named("record"),
 	}
 }
 
@@ -36,6 +36,7 @@ const (
 )
 
 func (r *RecordService) List(ctx context.Context, rq *connect.Request[v1.RecordServiceListRequest]) (*connect.Response[v1.RecordServiceListResponse], error) {
+	r.log.Debugw("list", "req", rq)
 	req := rq.Msg
 	zone, err := r.pdns.Zones.Get(ctx, req.Domain)
 	if err != nil {
@@ -83,13 +84,14 @@ func (r *RecordService) List(ctx context.Context, rq *connect.Request[v1.RecordS
 }
 
 func (r *RecordService) Create(ctx context.Context, rq *connect.Request[v1.RecordServiceCreateRequest]) (*connect.Response[v1.RecordServiceCreateResponse], error) {
+	r.log.Debugw("create", "req", rq)
 	req := rq.Msg
 	domain, err := domainFromFQDN(req.Name)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	rrtype := powerdns.RRType(req.Type.String())
-	r.log.Sugar().Infof("create record domain:%s name:%s type:%s", domain, req.Name, rrtype)
+	r.log.Infow("create record", "domain", domain, "name", req.Name, "type", rrtype)
 	err = r.pdns.Records.Add(ctx, domain, req.Name, rrtype, req.Ttl, []string{req.Data})
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
@@ -104,6 +106,7 @@ func (r *RecordService) Create(ctx context.Context, rq *connect.Request[v1.Recor
 }
 
 func (r *RecordService) Update(ctx context.Context, rq *connect.Request[v1.RecordServiceUpdateRequest]) (*connect.Response[v1.RecordServiceUpdateResponse], error) {
+	r.log.Debugw("update", "req", rq)
 	req := rq.Msg
 	domain, err := domainFromFQDN(req.Name)
 	if err != nil {
@@ -124,6 +127,7 @@ func (r *RecordService) Update(ctx context.Context, rq *connect.Request[v1.Recor
 }
 
 func (r *RecordService) Delete(ctx context.Context, rq *connect.Request[v1.RecordServiceDeleteRequest]) (*connect.Response[v1.RecordServiceDeleteResponse], error) {
+	r.log.Debugw("delete", "req", rq)
 	req := rq.Msg
 	domain, err := domainFromFQDN(req.Name)
 	if err != nil {
