@@ -2,3 +2,4 @@ bin
 *.pem
 *.csr
 coverage.out
+.vscode

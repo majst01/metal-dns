@@ -4,53 +4,43 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"sync"
 
+	connect "github.com/bufbuild/connect-go"
 	"github.com/joeig/go-powerdns/v3"
 	v1 "github.com/majst01/metal-dns/api/v1"
-	"github.com/majst01/metal-dns/pkg/auth"
+	"github.com/majst01/metal-dns/pkg/token"
 	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
-	healthgrpc "google.golang.org/grpc/health/grpc_health_v1"
-	healthpb "google.golang.org/grpc/health/grpc_health_v1"
-
-	"google.golang.org/grpc/status"
 )
 
 type DomainService struct {
 	pdns  *powerdns.Client
-	log   *zap.Logger
-	mu    sync.RWMutex
+	log   *zap.SugaredLogger
 	vhost string
 }
 
-func NewDomainService(l *zap.Logger, baseURL string, vHost string, apikey string, httpClient *http.Client) *DomainService {
+func NewDomainService(l *zap.SugaredLogger, baseURL string, vHost string, apikey string, httpClient *http.Client) *DomainService {
 	pdns := powerdns.NewClient(baseURL, vHost, map[string]string{"X-API-Key": apikey}, httpClient)
 	return &DomainService{
 		pdns:  pdns,
-		log:   l,
+		log:   l.Named("domain"),
 		vhost: vHost,
 	}
 }
-func (d *DomainService) List(ctx context.Context, req *v1.DomainServiceListRequest) (*v1.DomainServiceListResponse, error) {
-	_, jwt, err := auth.JWTFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-	claims, err := parseJWTToken(jwt)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
+
+func (d *DomainService) List(ctx context.Context, rq *connect.Request[v1.DomainServiceListRequest]) (*connect.Response[v1.DomainServiceListResponse], error) {
+	d.log.Debugw("list", "req", rq)
+	req := rq.Msg
+	claims := token.ClaimsFromContext(ctx)
 	allowedDomains := claims.Domains
 
 	filtered, err := filterDomains(req.Domains, allowedDomains)
 	if err != nil {
-		return nil, status.Error(codes.Unauthenticated, err.Error())
+		return nil, connect.NewError(connect.CodeUnauthenticated, err)
 	}
 
 	zones, err := d.pdns.Zones.List(ctx)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	domains := []*v1.Domain{}
 	for i := range zones {
@@ -62,19 +52,23 @@ func (d *DomainService) List(ctx context.Context, req *v1.DomainServiceListReque
 		domain := toV1Domain(&z)
 		domains = append(domains, domain)
 	}
-	return &v1.DomainServiceListResponse{Domains: domains}, nil
+	return connect.NewResponse(&v1.DomainServiceListResponse{Domains: domains}), nil
 }
 
-func (d *DomainService) Get(ctx context.Context, req *v1.DomainServiceGetRequest) (*v1.DomainServiceGetResponse, error) {
+func (d *DomainService) Get(ctx context.Context, rq *connect.Request[v1.DomainServiceGetRequest]) (*connect.Response[v1.DomainServiceGetResponse], error) {
+	d.log.Debugw("get", "req", rq)
+	req := rq.Msg
 	zone, err := d.pdns.Zones.Get(ctx, req.Name)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, connect.NewError(connect.CodeNotFound, err)
 	}
 	domain := toV1Domain(zone)
-	return &v1.DomainServiceGetResponse{Domain: domain}, nil
+	return connect.NewResponse(&v1.DomainServiceGetResponse{Domain: domain}), nil
 }
 
-func (d *DomainService) Create(ctx context.Context, req *v1.DomainServiceCreateRequest) (*v1.DomainServiceCreateResponse, error) {
+func (d *DomainService) Create(ctx context.Context, rq *connect.Request[v1.DomainServiceCreateRequest]) (*connect.Response[v1.DomainServiceCreateResponse], error) {
+	d.log.Debugw("create", "req", rq)
+	req := rq.Msg
 	// TODO add parameters to DomainCreateRequest
 	zone := &powerdns.Zone{
 		Name:        &req.Name,
@@ -88,45 +82,49 @@ func (d *DomainService) Create(ctx context.Context, req *v1.DomainServiceCreateR
 		Nameservers: req.Nameservers,
 	}
 	if req.Url != nil {
-		zone.URL = &req.Url.Value
+		zone.URL = req.Url
 	}
 	zone, err := d.pdns.Zones.Add(ctx, zone)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	domain := toV1Domain(zone)
-	return &v1.DomainServiceCreateResponse{Domain: domain}, nil
+	return connect.NewResponse(&v1.DomainServiceCreateResponse{Domain: domain}), nil
 }
 
-func (d *DomainService) Update(ctx context.Context, req *v1.DomainServiceUpdateRequest) (*v1.DomainServiceUpdateResponse, error) {
+func (d *DomainService) Update(ctx context.Context, rq *connect.Request[v1.DomainServiceUpdateRequest]) (*connect.Response[v1.DomainServiceUpdateResponse], error) {
+	d.log.Debugw("update", "req", rq)
+	req := rq.Msg
 	existingZone, err := d.pdns.Zones.Get(ctx, req.Name)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, connect.NewError(connect.CodeNotFound, err)
 	}
 
 	existingZone.Nameservers = req.Nameservers
 	if req.Url != nil {
-		existingZone.URL = &req.Url.Value
+		existingZone.URL = req.Url
 	}
 
 	err = d.pdns.Zones.Change(ctx, *existingZone.Name, existingZone)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	domain := toV1Domain(existingZone)
-	return &v1.DomainServiceUpdateResponse{Domain: domain}, nil
+	return connect.NewResponse(&v1.DomainServiceUpdateResponse{Domain: domain}), nil
 }
 
-func (d *DomainService) Delete(ctx context.Context, req *v1.DomainServiceDeleteRequest) (*v1.DomainServiceDeleteResponse, error) {
+func (d *DomainService) Delete(ctx context.Context, rq *connect.Request[v1.DomainServiceDeleteRequest]) (*connect.Response[v1.DomainServiceDeleteResponse], error) {
+	d.log.Debugw("delete", "req", rq)
+	req := rq.Msg
 	err := d.pdns.Zones.Delete(ctx, req.Name)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	domain := &v1.Domain{
 		Name: req.Name,
 	}
-	return &v1.DomainServiceDeleteResponse{Domain: domain}, nil
+	return connect.NewResponse(&v1.DomainServiceDeleteResponse{Domain: domain}), nil
 }
 
 func toV1Domain(zone *powerdns.Zone) *v1.Domain {
@@ -165,27 +163,4 @@ func toMap(in []string) map[string]bool {
 		out[in[i]] = true
 	}
 	return out
-}
-
-func (d *DomainService) Check(ctx context.Context, in *healthpb.HealthCheckRequest) (*healthpb.HealthCheckResponse, error) {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
-	s, err := d.pdns.Servers.Get(ctx, d.vhost)
-	if err != nil {
-		return &healthpb.HealthCheckResponse{
-			Status: healthpb.HealthCheckResponse_NOT_SERVING,
-		}, err
-	}
-	if s.Version != nil {
-		return &healthpb.HealthCheckResponse{
-			Status: healthpb.HealthCheckResponse_SERVING,
-		}, nil
-	}
-	return nil, status.Error(codes.NotFound, "unknown service")
-}
-
-// Watch implements `service Health`.
-func (d *DomainService) Watch(in *healthpb.HealthCheckRequest, stream healthgrpc.Health_WatchServer) error {
-	// TODO not implemented
-	return nil
 }

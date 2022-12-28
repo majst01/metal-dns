@@ -19,8 +19,7 @@ test:
 
 .PHONY: protoc
 protoc:
-	docker pull metalstack/builder
-	docker run --rm --user $$(id -u):$$(id -g) -v ${PWD}:/work metalstack/builder protoc --proto_path=api --go_out=plugins=grpc:api api/v1/*.proto
+	$(MAKE) -C proto protolint
 
 .PHONY: server
 server:
@@ -46,7 +45,7 @@ dockerpush:
 
 .PHONY: pdns-up
 pdns-up: pdns-rm
-	docker run -d --name powerdns -it --rm -p 8081:80 -p 5533:53 powerdns/pdns-auth-46 \
+	docker run -d --name powerdns -it --rm -p 8081:80 -p 5533:53 powerdns/pdns-auth-47 \
 		--api=yes \
 		--api-key=apipw \
 		--webserver=yes \
@@ -71,11 +70,3 @@ query:
 .PHONY: pdns-rm
 pdns-rm:
 	docker rm -f powerdns || true
-
-.PHONY: certs
-certs:
-	cd certs
-		cfssl gencert -initca ca-csr.json | cfssljson -bare ca -
-		cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile client-server server.json | cfssljson -bare server -
-		cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile client client.json | cfssljson -bare client -
-	cd -

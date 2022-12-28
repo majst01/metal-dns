@@ -6,24 +6,23 @@ import (
 	"net/http"
 	"strings"
 
+	connect "github.com/bufbuild/connect-go"
 	"github.com/joeig/go-powerdns/v3"
 	v1 "github.com/majst01/metal-dns/api/v1"
 	"github.com/miekg/dns"
 	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type RecordService struct {
 	pdns *powerdns.Client
-	log  *zap.Logger
+	log  *zap.SugaredLogger
 }
 
-func NewRecordService(l *zap.Logger, baseURL string, vHost string, apikey string, httpClient *http.Client) *RecordService {
+func NewRecordService(l *zap.SugaredLogger, baseURL string, vHost string, apikey string, httpClient *http.Client) *RecordService {
 	pdns := powerdns.NewClient(baseURL, vHost, map[string]string{"X-API-Key": apikey}, httpClient)
 	return &RecordService{
 		pdns: pdns,
-		log:  l,
+		log:  l.Named("record"),
 	}
 }
 
@@ -36,10 +35,12 @@ const (
 	byNameAndType
 )
 
-func (r *RecordService) List(ctx context.Context, req *v1.RecordServiceListRequest) (*v1.RecordServiceListResponse, error) {
+func (r *RecordService) List(ctx context.Context, rq *connect.Request[v1.RecordServiceListRequest]) (*connect.Response[v1.RecordServiceListResponse], error) {
+	r.log.Debugw("list", "req", rq)
+	req := rq.Msg
 	zone, err := r.pdns.Zones.Get(ctx, req.Domain)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	recordSearch := byAny
 	if req.Name != nil && req.Type == v1.RecordType_ANY {
@@ -62,7 +63,7 @@ func (r *RecordService) List(ctx context.Context, req *v1.RecordServiceListReque
 			case byAny:
 				record = toV1Record(r, rset)
 			case byName:
-				if req.Name.Value == *rset.Name {
+				if *req.Name == *rset.Name {
 					record = toV1Record(r, rset)
 				}
 			case byType:
@@ -70,7 +71,7 @@ func (r *RecordService) List(ctx context.Context, req *v1.RecordServiceListReque
 					record = toV1Record(r, rset)
 				}
 			case byNameAndType:
-				if req.Name.Value == *rset.Name && req.Type.String() == string(*rset.Type) {
+				if *req.Name == *rset.Name && req.Type.String() == string(*rset.Type) {
 					record = toV1Record(r, rset)
 				}
 			}
@@ -79,19 +80,21 @@ func (r *RecordService) List(ctx context.Context, req *v1.RecordServiceListReque
 			}
 		}
 	}
-	return &v1.RecordServiceListResponse{Records: records}, nil
+	return connect.NewResponse(&v1.RecordServiceListResponse{Records: records}), nil
 }
 
-func (r *RecordService) Create(ctx context.Context, req *v1.RecordServiceCreateRequest) (*v1.RecordServiceCreateResponse, error) {
+func (r *RecordService) Create(ctx context.Context, rq *connect.Request[v1.RecordServiceCreateRequest]) (*connect.Response[v1.RecordServiceCreateResponse], error) {
+	r.log.Debugw("create", "req", rq)
+	req := rq.Msg
 	domain, err := domainFromFQDN(req.Name)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	rrtype := powerdns.RRType(req.Type.String())
-	r.log.Sugar().Infof("create record domain:%s name:%s type:%s", domain, req.Name, rrtype)
+	r.log.Infow("create record", "domain", domain, "name", req.Name, "type", rrtype)
 	err = r.pdns.Records.Add(ctx, domain, req.Name, rrtype, req.Ttl, []string{req.Data})
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	record := &v1.Record{
 		Name: req.Name,
@@ -99,18 +102,20 @@ func (r *RecordService) Create(ctx context.Context, req *v1.RecordServiceCreateR
 		Type: req.Type,
 		Ttl:  req.Ttl,
 	}
-	return &v1.RecordServiceCreateResponse{Record: record}, nil
+	return connect.NewResponse(&v1.RecordServiceCreateResponse{Record: record}), nil
 }
 
-func (r *RecordService) Update(ctx context.Context, req *v1.RecordServiceUpdateRequest) (*v1.RecordServiceUpdateResponse, error) {
+func (r *RecordService) Update(ctx context.Context, rq *connect.Request[v1.RecordServiceUpdateRequest]) (*connect.Response[v1.RecordServiceUpdateResponse], error) {
+	r.log.Debugw("update", "req", rq)
+	req := rq.Msg
 	domain, err := domainFromFQDN(req.Name)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	rrtype := powerdns.RRType(req.Type.String())
 	err = r.pdns.Records.Change(ctx, domain, req.Name, rrtype, req.Ttl, []string{req.Data})
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	record := &v1.Record{
 		Name: req.Name,
@@ -118,18 +123,20 @@ func (r *RecordService) Update(ctx context.Context, req *v1.RecordServiceUpdateR
 		Type: req.Type,
 		Ttl:  req.Ttl,
 	}
-	return &v1.RecordServiceUpdateResponse{Record: record}, nil
+	return connect.NewResponse(&v1.RecordServiceUpdateResponse{Record: record}), nil
 }
 
-func (r *RecordService) Delete(ctx context.Context, req *v1.RecordServiceDeleteRequest) (*v1.RecordServiceDeleteResponse, error) {
+func (r *RecordService) Delete(ctx context.Context, rq *connect.Request[v1.RecordServiceDeleteRequest]) (*connect.Response[v1.RecordServiceDeleteResponse], error) {
+	r.log.Debugw("delete", "req", rq)
+	req := rq.Msg
 	domain, err := domainFromFQDN(req.Name)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	rrtype := powerdns.RRType(req.Type.String())
 	err = r.pdns.Records.Delete(ctx, domain, req.Name, rrtype)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	record := &v1.Record{
@@ -137,7 +144,7 @@ func (r *RecordService) Delete(ctx context.Context, req *v1.RecordServiceDeleteR
 		Data: req.Data,
 		Type: req.Type,
 	}
-	return &v1.RecordServiceDeleteResponse{Record: record}, nil
+	return connect.NewResponse(&v1.RecordServiceDeleteResponse{Record: record}), nil
 }
 
 // Helper

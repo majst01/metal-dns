@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	connect "github.com/bufbuild/connect-go"
+
 	v1 "github.com/majst01/metal-dns/api/v1"
+	"github.com/majst01/metal-dns/pkg/token"
 	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
@@ -18,37 +19,32 @@ const oneYear = time.Hour * 24 * 360
 
 type TokenService struct {
 	secret string
-	log    *zap.Logger
+	log    *zap.SugaredLogger
 }
 
-func NewTokenService(l *zap.Logger, secret string) *TokenService {
+func NewTokenService(l *zap.SugaredLogger, secret string) *TokenService {
 	return &TokenService{
 		secret: secret,
-		log:    l,
+		log:    l.Named("token"),
 	}
 }
-func (t *TokenService) Create(ctx context.Context, req *v1.TokenServiceCreateRequest) (*v1.TokenServiceCreateResponse, error) {
+func (t *TokenService) Create(ctx context.Context, rq *connect.Request[v1.TokenServiceCreateRequest]) (*connect.Response[v1.TokenServiceCreateResponse], error) {
+	t.log.Debugw("create", "req", rq)
+	req := rq.Msg
 	exp := oneYear
 	if req.Expires != nil {
 		exp = req.Expires.AsDuration()
 	}
 	token, err := newJWTToken("metal-dns", req.Issuer, req.Domains, req.Permissions, exp, t.secret)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
-	return &v1.TokenServiceCreateResponse{Token: token}, nil
-}
-
-type dnsClaims struct {
-	jwt.RegisteredClaims
-
-	Domains     []string `json:"domains,omitempty"`
-	Permissions []string `json:"permissions,omitempty"`
+	return connect.NewResponse(&v1.TokenServiceCreateResponse{Token: token}), nil
 }
 
 func newJWTToken(subject, issuer string, domains, permissions []string, expires time.Duration, secret string) (string, error) {
 	now := time.Now().UTC()
-	claims := &dnsClaims{
+	claims := &token.DNSClaims{
 		// see overview of "registered" JWT claims as used by jwt-go here:
 		//   https://pkg.go.dev/github.com/golang-jwt/jwt/v4?utm_source=godoc#RegisteredClaims
 		// see the semantics of the registered claims here:
@@ -75,15 +71,4 @@ func newJWTToken(subject, issuer string, domains, permissions []string, expires 
 		return "", fmt.Errorf("unable to sign RS256 JWT: %w", err)
 	}
 	return res, nil
-}
-
-func parseJWTToken(token string) (*dnsClaims, error) {
-	claims := &dnsClaims{}
-	_, _, err := new(jwt.Parser).ParseUnverified(string(token), claims)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return claims, nil
 }

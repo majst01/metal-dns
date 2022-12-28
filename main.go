@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 const (
@@ -17,7 +18,7 @@ const (
 )
 
 var (
-	logger *zap.Logger
+	logger *zap.SugaredLogger
 )
 
 var rootCmd = &cobra.Command{
@@ -43,18 +44,15 @@ func initConfig() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.Flags().StringP("host", "", "localhost", "the host/ip to serve on")
-	rootCmd.Flags().IntP("port", "", 50051, "the port to serve on")
-
-	rootCmd.Flags().StringP("ca", "", "certs/ca.pem", "ca path")
-	rootCmd.Flags().StringP("cert", "", "certs/server.pem", "server certificate path")
-	rootCmd.Flags().StringP("certkey", "", "certs/server-key.pem", "server key path")
+	rootCmd.Flags().StringP("http-endpoint", "", "localhost:8080", "the host/ip to serve on")
 
 	rootCmd.Flags().StringP("secret", "", "secret", "jwt signing secret")
 
 	rootCmd.Flags().StringP("pdns-api-url", "", "http://localhost:8081", "powerdns api url")
 	rootCmd.Flags().StringP("pdns-api-password", "", "apipw", "powerdns api password")
 	rootCmd.Flags().StringP("pdns-api-vhost", "", "localhost", "powerdns vhost")
+
+	rootCmd.Flags().StringP("log-level", "", "info", "log level to use")
 
 	err := viper.BindPFlags(rootCmd.Flags())
 	if err != nil {
@@ -63,7 +61,7 @@ func init() {
 }
 
 func run() {
-	logger, _ = zap.NewProduction()
+	logger, _ = createLogger()
 	defer func() {
 		err := logger.Sync() // flushes buffer, if any
 		if err != nil {
@@ -72,25 +70,35 @@ func run() {
 	}()
 
 	config := server.DialConfig{
-		Host:   viper.GetString("host"),
-		Port:   viper.GetInt("port"),
-		Secret: viper.GetString("secret"),
-
-		CA:      viper.GetString("ca"),
-		Cert:    viper.GetString("cert"),
-		CertKey: viper.GetString("certkey"),
+		HttpServerEndpoint: viper.GetString("http-endpoint"),
+		Secret:             viper.GetString("secret"),
 
 		PdnsApiUrl:      viper.GetString("pdns-api-url"),
 		PdnsApiPassword: viper.GetString("pdns-api-password"),
 		PdnsApiVHost:    viper.GetString("pdns-api-vhost"),
 	}
-	s, err := server.NewServer(logger, config)
+	s, err := server.New(logger, config)
 	if err != nil {
 		logger.Fatal("failed to create server %v", zap.Error(err))
 	}
-
-	s.StartMetricsAndPprof()
 	if err := s.Serve(); err != nil {
 		logger.Fatal("failed to serve", zap.Error(err))
 	}
+}
+
+func createLogger() (*zap.SugaredLogger, error) {
+	cfg := zap.NewProductionConfig()
+	level, err := zap.ParseAtomicLevel(viper.GetString("log-level"))
+	if err != nil {
+		return nil, err
+	}
+	cfg.Level = level
+	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	zlog, err := cfg.Build()
+	if err != nil {
+		return nil, err
+	}
+
+	logger := zlog.Sugar()
+	return logger, nil
 }
