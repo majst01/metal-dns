@@ -1,12 +1,14 @@
 package api.v1.metalstack.io.authz
 
+secret = "secret"
+
 test_get_domain_allowed {
 	decision.allow with input as {
 		"method": "/api.v1.DomainService/Get",
 		"request": {"name": "a.example.com"},
 		"token": jwt,
-		"secret": "secret",
 	}
+		with data.secret as secret
 }
 
 test_list_domains_not_allowed_with_wrong_jwt {
@@ -14,8 +16,8 @@ test_list_domains_not_allowed_with_wrong_jwt {
 		"method": "/api.v1.DomainService/List",
 		"request": null,
 		"token": jwt_with_wrong_secret,
-		"secret": "secret",
 	}
+		with data.secret as secret
 }
 
 test_list_domains_allowed_with_empty_domain {
@@ -23,8 +25,8 @@ test_list_domains_allowed_with_empty_domain {
 		"method": "/api.v1.DomainService/List",
 		"request": null,
 		"token": jwt,
-		"secret": "secret",
 	}
+		with data.secret as secret
 }
 
 test_list_domains_allowed {
@@ -32,8 +34,8 @@ test_list_domains_allowed {
 		"method": "/api.v1.DomainService/List",
 		"request": {"name": "example.com"},
 		"token": jwt,
-		"secret": "secret",
 	}
+		with data.secret as secret
 }
 
 test_create_domains_allowed {
@@ -41,8 +43,8 @@ test_create_domains_allowed {
 		"method": "/api.v1.DomainService/Create",
 		"request": {"name": "a.example.com"},
 		"token": jwt,
-		"secret": "secret",
 	}
+		with data.secret as secret
 }
 
 test_create_domains_not_allowed {
@@ -50,6 +52,6 @@ test_create_domains_not_allowed {
 		"method": "/api.v1.DomainService/Create",
 		"request": {"name": "example.com"},
 		"token": jwt,
-		"secret": "secret",
 	}
+		with data.secret as secret
 }
