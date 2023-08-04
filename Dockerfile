@@ -1,4 +1,4 @@
-FROM golang:1.19-alpine as builder
+FROM golang:1.20-alpine as builder
 
 RUN apk add \
     gcc \
@@ -10,6 +10,6 @@ WORKDIR /work
 COPY . .
 RUN make server
 
-FROM alpine:3.17
+FROM alpine:3.18
 COPY --from=builder /work/bin/server /
 ENTRYPOINT [ "/server" ]
